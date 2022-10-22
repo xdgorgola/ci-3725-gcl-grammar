@@ -48,8 +48,7 @@ public class LexerMain {
         Token cur = null;
         while (tokens.hasNext()) {
             cur = tokens.next();
-            System.out.println(String.format("%s %s %s --> %s", GCL.ruleNames[cur.getType() - 1], cur.getLine(),
-                cur.getCharPositionInLine(), cur.getText()));
+            printToken(cur);
         }
     }
 
@@ -61,7 +60,7 @@ public class LexerMain {
      * @throws FileNotFoundException Si no se puede abrir el archivo.
      * @throws IllegalArgumentException Si el archivo no es .gcl
      */
-    private File openGCLFile(String filePath) throws FileNotFoundException, IllegalArgumentException {
+    static private File openGCLFile(String filePath) throws FileNotFoundException, IllegalArgumentException {
 
         if (!filePath.endsWith(".gcl")) {
             throw new IllegalArgumentException();
@@ -96,5 +95,31 @@ public class LexerMain {
         _input = sb.toString();
         //System.out.println(_input);
         sc.close();
-    }   
+    } 
+    
+    /**
+     * Función que recibe un token y lo imprime con el formato dado en el
+     * enunciado del proyecto.
+     * 
+     * @param cur Token a imprimir, junto a su localización (fila y columna)
+     * y su valor
+     */
+    static void printToken(Token cur) {
+        int num = cur.getType();
+        switch (num) {
+            case GCL.TkString:
+            case GCL.TkNum:
+                System.out.println(String.format("%s(%s) %s %s", GCL.ruleNames[num - 1], cur.getText(),
+                    cur.getLine(), cur.getCharPositionInLine()));
+                return;
+            case GCL.TkId:
+                System.out.println(String.format("%s(\"%s\") %s %s", GCL.ruleNames[num - 1], cur.getText(),
+                    cur.getLine(), cur.getCharPositionInLine()));
+                return;
+            default: 
+                System.out.println(String.format("%s %s %s", GCL.ruleNames[num - 1],
+                    cur.getLine(), cur.getCharPositionInLine()));
+                return;
+        } 
+    }
 }

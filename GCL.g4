@@ -12,6 +12,8 @@ TkRof:      'rof' ;
 TkSkip:     'skip' ;
 TkPrint:    'print' ;
 TkDeclare:  'declare' ;
+TkInt:      'int';
+TkArray:    'array';
 
 // Literales
 // CTTES Booleanas
@@ -19,7 +21,7 @@ TkTrue:     'true' ;
 TkFalse:    'false' ;
 
 // Enteros
-TkNum:  [1-9]+[0-9]* ;
+TkNum:  [0-9]+[0-9]* ;
 
 // Strings
 TkString: '"'.*?'"' ;
@@ -51,7 +53,12 @@ TkLeq:      '<=' ;
 TkGeq:      '>=' ;
 TkEqual:    '==' ;
 TkOr:       '\\/' ;
-TkAnd:      '/\\)' ;
+TkAnd:      '/\\' ;
+TkNEqual:   '!=';
+TkOBracket: '[';
+TkCBracket: ']';
+TkTwoPoints: ':';
+TkConcat: '.';
 
 // Ignorar comentarios
 SLCMT: '//'.*?('\n'|'\r''\n'|EOF) -> skip ; // revisar

@@ -1,9 +1,8 @@
 |[
-\/
-// hola esto es un comentario
-+ 123 4 5
-"jiji string loca 123"
-asd
-_a1
+ declare
+  a, b, c : int;
+  d, e, f : array[0..2]
+  a := b + 3;
+  print e
+// Esto es un comentario. Debe ser ignorado.
 ]|
-$$

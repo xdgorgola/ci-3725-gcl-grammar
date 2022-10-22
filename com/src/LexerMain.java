@@ -22,8 +22,7 @@ public class LexerMain {
     
 
     public static void main(String[] args) {
-        if (args.length != 1)
-        {
+        if (args.length != 1) {
             // Print de instrucciones.
             return;
         }
@@ -31,8 +30,11 @@ public class LexerMain {
         LexerMain main;
         try {
             main = new LexerMain(args[0]);
-        } catch (FileNotFoundException | IllegalArgumentException e) {
-            // Print de instrucciones
+        } catch (FileNotFoundException e) {
+            System.out.println("Archivo no encontrado.");
+            return;
+        } catch (IllegalArgumentException e) {
+            System.out.println("Archivo no tiene formato .gcl");
             return;
         }
 
@@ -44,8 +46,7 @@ public class LexerMain {
         
         Iterator<? extends Token> tokens = grammar.getAllTokens().iterator();
         Token cur = null;
-        while (tokens.hasNext())
-        {
+        while (tokens.hasNext()) {
             cur = tokens.next();
             System.out.println(String.format("%s %s %s --> %s", GCL.ruleNames[cur.getType() - 1], cur.getLine(),
                 cur.getCharPositionInLine(), cur.getText()));
@@ -63,7 +64,6 @@ public class LexerMain {
     private File openGCLFile(String filePath) throws FileNotFoundException, IllegalArgumentException {
 
         if (!filePath.endsWith(".gcl")) {
-            System.out.println("Archivo introducido no es de formato .gcl");
             throw new IllegalArgumentException();
         }
 

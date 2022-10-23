@@ -18,14 +18,13 @@ import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 
 
-/**
- * Clase principal
- */
 public class GCLTranslator implements ANTLRErrorListener {
 
     /** Input recibido en forma de string */
     private String _input = null;
+    /** Gramatica de GCL */
     private GCL _gclGrammar = null;
+    /** Indica si hubo un error de lexeo */
     private boolean _lexerErrorFound = false;
 
 
@@ -71,6 +70,9 @@ public class GCLTranslator implements ANTLRErrorListener {
     }
 
 
+    /**
+     * Printea informacion sobre el proceso de lexeo
+     */
     public void printLexerInfo()
     {
         if (_input == null) {
@@ -144,7 +146,7 @@ public class GCLTranslator implements ANTLRErrorListener {
     public void syntaxError(Recognizer<?, ?> arg0, Object arg1, int arg2, int arg3, String arg4,
             RecognitionException arg5) {
 
-        System.out.format("Error: Unexpected character \"%s\" in row %s, column %s\n", ">inserta caracter aca<", arg2, arg3);
+        System.out.format("Error: Unexpected character \"%s\" in row %s, column %s\n", arg5.toString().split("'")[1], arg2, arg3);
         _lexerErrorFound = true;
     }
 
@@ -171,7 +173,6 @@ public class GCLTranslator implements ANTLRErrorListener {
         sc.close();
         _lexerErrorFound = false;
 
-                
         _gclGrammar = new GCL(CharStreams.fromString(_input));
         _gclGrammar.removeErrorListeners();
         _gclGrammar.addErrorListener(this);

@@ -1,7 +1,5 @@
 package com.src;
 
-import com.parsing.GCL;
-
 import java.io.File;
 import java.util.BitSet;
 import java.util.Scanner;
@@ -11,6 +9,9 @@ import java.io.FileNotFoundException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.dfa.DFA;
+
+import com.parsing.GCL;
+
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.atn.ATNConfigSet;

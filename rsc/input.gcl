@@ -1,8 +1,14 @@
 |[
- declare
-  a, b, c : int;
-  d, e, f : array[0..2]
-  a := b + 3;
-  print e
-// Esto es un comentario. Debe ser ignorado.
+  declare x: int
+    x := 0;
+    _ := 11;
+    _1 := 20;
+  
+  if -5 <= x /\ x < 0 -->
+    print "Del -5 al 0"
+  [] x == 0 -->
+    print "Tengo un cero"
+  [] 1 <= x /\ x < 100 -->
+    print "Del 1 al 100"
+  fi
 ]|

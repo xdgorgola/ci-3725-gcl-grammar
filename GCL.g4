@@ -16,15 +16,16 @@ TkPrint:    'print' ;
 TkDeclare:  'declare' ;
 
 // Separadores
-TkComma:        ',' ;
-TkOpenPar:      '(' ;
-TKClosePar:     ')' ;
-TkSemicolon:    ';' ;
-TkOBlock:       '|[' ;
-TkCBlock:       ']|' ;
-TkSoForth:      '..' ;
-TkAsig:         ':=' ;
-TkArrow:        '-->' ;
+TkComma:       ',' ;
+TkOpenPar:     '(' ;
+TKClosePar:    ')' ;
+TkSemicolon:   ';' ;
+TkOBlock:      '|[' ;
+TkCBlock:      ']|' ;
+TkSoForth:     '..' ;
+TkAsig:        ':=' ;
+TkArrow:       '-->' ;
+TkGuard:       '[]' ;    
 
 // Operadores
 TkConcat: '.';

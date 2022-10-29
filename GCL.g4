@@ -2,23 +2,25 @@ lexer grammar GCL;
 
 // Tokens
 // Palabras claves
-TkIf:       'if' ;
-TkFi:       'fi' ;
-TkDo:       'do' ;
-TkOd:       'od' ;
-TkIn:       'in' ;
-TkInt:      'int';
-TkFor:      'for' ;
-TkRof:      'rof' ;
-TkArray:    'array';
-TkSkip:     'skip' ;
-TkPrint:    'print' ;
-TkDeclare:  'declare' ;
+TkIf:          'if' ;
+TkFi:          'fi' ;
+TkDo:          'do' ;
+TkOd:          'od' ;
+TkTo:          'to' ;
+TkIn:          'in' ;
+TkInt:         'int';
+TkBool:        'bool';
+TkFor:         'for' ;
+TkRof:         'rof' ;
+TkArray:       'array';
+TkSkip:        'skip' ;
+TkPrint:       'print' ;
+TkDeclare:     'declare' ;
 
 // Separadores
 TkComma:       ',' ;
 TkOpenPar:     '(' ;
-TKClosePar:    ')' ;
+TkClosePar:    ')' ;
 TkSemicolon:   ';' ;
 TkOBlock:      '|[' ;
 TkCBlock:      ']|' ;

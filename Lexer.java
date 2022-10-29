@@ -1,5 +1,3 @@
-package com.src;
-
 import java.io.File;
 import java.util.BitSet;
 import java.util.Scanner;
@@ -19,7 +17,7 @@ import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 
 
-public class GCLTranslator implements ANTLRErrorListener {
+public class Lexer implements ANTLRErrorListener {
 
     /** Input recibido en forma de string */
     private String _input = null;
@@ -35,9 +33,9 @@ public class GCLTranslator implements ANTLRErrorListener {
             return;
         }
 
-        GCLTranslator translator;
+        Lexer translator;
         try {
-            translator = new GCLTranslator(args[0]);
+            translator = new Lexer(args[0]);
         } catch (FileNotFoundException e) {
             System.out.println("Archivo no encontrado.");
             return;
@@ -107,15 +105,15 @@ public class GCLTranslator implements ANTLRErrorListener {
             case GCL.TkString:
             case GCL.TkNum:
                 System.out.println(String.format("%s(%s) %s %s", GCL.ruleNames[num - 1], cur.getText(),
-                    cur.getLine(), cur.getCharPositionInLine()));
+                    cur.getLine(), cur.getCharPositionInLine() + 1));
                 return;
             case GCL.TkId:
                 System.out.println(String.format("%s(\"%s\") %s %s", GCL.ruleNames[num - 1], cur.getText(),
-                    cur.getLine(), cur.getCharPositionInLine()));
+                    cur.getLine(), cur.getCharPositionInLine() + 1));
                 return;
             default: 
                 System.out.println(String.format("%s %s %s", GCL.ruleNames[num - 1],
-                    cur.getLine(), cur.getCharPositionInLine()));
+                    cur.getLine(), cur.getCharPositionInLine() + 1));
                 return;
         } 
     }
@@ -147,7 +145,7 @@ public class GCLTranslator implements ANTLRErrorListener {
     public void syntaxError(Recognizer<?, ?> arg0, Object arg1, int arg2, int arg3, String arg4,
             RecognitionException arg5) {
 
-        System.out.format("Error: Unexpected character \"%s\" in row %s, column %s\n", arg5.toString().split("'")[1], arg2, arg3);
+        System.out.format("Error: Unexpected character \"%s\" in row %s, column %s\n", arg5.toString().split("'")[1], arg2, arg3 + 1);
         _lexerErrorFound = true;
     }
 
@@ -160,7 +158,7 @@ public class GCLTranslator implements ANTLRErrorListener {
      * @throws FileNotFoundException Si no se puede abrir el archivo
      * @throws IllegalArgumentException Si el archivo no es .gcl
      */
-    public GCLTranslator(String filePath) throws FileNotFoundException, IllegalArgumentException {
+    public Lexer(String filePath) throws FileNotFoundException, IllegalArgumentException {
         File f = openGCLFile(filePath);
         
         Scanner sc = new Scanner(f);

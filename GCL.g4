@@ -57,7 +57,8 @@ TkNum:  [1-9]+[0-9]*
      |  '0';
 
 // Strings
-TkString: '"'.*?'"' ;
+TkString:   '"' ('\\'[n"\\] | ~[\r\n\\"])* '"' ;
+
 
 // Variables
 TkId:   ([a-zA-Z1-9] | '_')+([a-zA-Z0-9]|'_')* ;

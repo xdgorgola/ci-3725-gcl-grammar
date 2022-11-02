@@ -57,7 +57,7 @@ TkNum:  [1-9]+[0-9]*
      |  '0';
 
 // Strings
-TkString:   '"' ('\\'[n"\\] | ~[\r\n\\"])* '"' ;
+TkString:   '"' ('\\'[n"\\] | ~[\r\n\\"])*? '"' ;
 
 
 // Variables

@@ -9,6 +9,6 @@
   [] x == 0 -->
     print "Tengo un cero"
   [] 1 <= x /\ x < 100 -->
-    print "Del \x 1 al 100"
+    print "Del 1 al 100"
   fi
 ]|

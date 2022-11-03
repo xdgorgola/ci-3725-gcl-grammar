@@ -13,7 +13,7 @@ de ANTLR, de la siguiente forma:
 ## Ejecución
 Simplemente se debe ubicar en el directorio raíz del proyecto y ejecutar el siguiente comando:
 
-    java Lexer
+    java Lexer <PATH_ARCHIVO_GCL_TOKENIZAR>
     
 ## Notas
  - En caso de que ANTLR4 ya se ubique en el `CLASSPATH` del sistema operativo, no es necesario utilizar el

@@ -1,5 +1,4 @@
 # ci-3725-gcl-grammar
-# README
 ## Requisitos
  - Java SDK
  - ANTLR 4.11.1

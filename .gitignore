@@ -29,3 +29,4 @@ hs_err_pid*
 *.tokens
 *.out
 *.ps1
+*.pdf

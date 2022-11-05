@@ -8,6 +8,8 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.dfa.DFA;
 
+import com.parsing.GCLGrammarLexer;
+
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.atn.ATNConfigSet;

@@ -8,8 +8,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.dfa.DFA;
 
-import com.parsing.GCL;
-
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
@@ -17,12 +15,12 @@ import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 
 
-public class Lexer implements ANTLRErrorListener {
+public class GCL implements ANTLRErrorListener {
 
     /** Input recibido en forma de string */
     private String _input = null;
     /** Gramatica de GCL */
-    private GCL _gclGrammar = null;
+    private GCLGrammarLexer _gclLexer = null;
     /** Indica si hubo un error de lexeo */
     private boolean _lexerErrorFound = false;
 
@@ -33,9 +31,9 @@ public class Lexer implements ANTLRErrorListener {
             return;
         }
 
-        Lexer translator;
+        GCL translator;
         try {
-            translator = new Lexer(args[0]);
+            translator = new GCL(args[0]);
         } catch (FileNotFoundException e) {
             System.out.println("Archivo no encontrado.");
             return;
@@ -78,7 +76,7 @@ public class Lexer implements ANTLRErrorListener {
             return;
         }
 
-        Iterator<? extends Token> tokens = _gclGrammar.getAllTokens().iterator();
+        Iterator<? extends Token> tokens = _gclLexer.getAllTokens().iterator();
         
         if (_lexerErrorFound) {
             return;
@@ -102,17 +100,17 @@ public class Lexer implements ANTLRErrorListener {
     public static void printToken(Token cur) {
         int num = cur.getType();
         switch (num) {
-            case GCL.TkString:
-            case GCL.TkNum:
-                System.out.println(String.format("%s(%s) %s %s", GCL.ruleNames[num - 1], cur.getText(),
+            case GCLGrammarLexer.TkString:
+            case GCLGrammarLexer.TkNum:
+                System.out.println(String.format("%s(%s) %s %s", GCLGrammarLexer.ruleNames[num - 1], cur.getText(),
                     cur.getLine(), cur.getCharPositionInLine() + 1));
                 return;
-            case GCL.TkId:
-                System.out.println(String.format("%s(\"%s\") %s %s", GCL.ruleNames[num - 1], cur.getText(),
+            case GCLGrammarLexer.TkId:
+                System.out.println(String.format("%s(\"%s\") %s %s", GCLGrammarLexer.ruleNames[num - 1], cur.getText(),
                     cur.getLine(), cur.getCharPositionInLine() + 1));
                 return;
             default: 
-                System.out.println(String.format("%s %s %s", GCL.ruleNames[num - 1],
+                System.out.println(String.format("%s %s %s", GCLGrammarLexer.ruleNames[num - 1],
                     cur.getLine(), cur.getCharPositionInLine() + 1));
                 return;
         } 
@@ -158,7 +156,7 @@ public class Lexer implements ANTLRErrorListener {
      * @throws FileNotFoundException Si no se puede abrir el archivo
      * @throws IllegalArgumentException Si el archivo no es .gcl
      */
-    public Lexer(String filePath) throws FileNotFoundException, IllegalArgumentException {
+    public GCL(String filePath) throws FileNotFoundException, IllegalArgumentException {
         File f = openGCLFile(filePath);
         
         Scanner sc = new Scanner(f);
@@ -172,8 +170,8 @@ public class Lexer implements ANTLRErrorListener {
         sc.close();
         _lexerErrorFound = false;
 
-        _gclGrammar = new GCL(CharStreams.fromString(_input));
-        _gclGrammar.removeErrorListeners();
-        _gclGrammar.addErrorListener(this);
+        _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
+        _gclLexer.removeErrorListeners();
+        _gclLexer.addErrorListener(this);
     } 
 }

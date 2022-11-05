@@ -1,4 +1,4 @@
-lexer grammar GCL;
+lexer grammar GCLLexer;
 
 // Tokens
 // Palabras claves

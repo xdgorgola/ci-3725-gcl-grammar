@@ -1,72 +1,6 @@
 grammar GCLGrammar; 
 import GCLLexer;
 
-block: TkOBlock 
-       declaration*
-       seq
-       TkCBlock;
-
-declaration   : TkDeclare (seq | decl);
-
-seq  : decl (TkSemicolon decl)+ (TkSemicolon seq)*
-     | asig (TkSemicolon seq)*
-     | print (TkSemicolon seq)*
-     ;
-
-decl : TkId (TkComma TkId)* TkTwoPoints type;
-
-type : TkInt
-     | TkBool
-     | TkArray TkOBracket TkNum TkSoForth TkNum TkCBracket
-     ;
-
-asig : TkId TkAsig (lit | op);
-
-print: TkPrint (op | lit | ident | readA);
-
-op   : sum 
-     | sus 
-     | mult 
-     | neg
-     | mayor
-     | menor
-     | mayorig
-     | menorig
-     | y
-     | o
-     | no
-     | desig
-     | conc
-     ;
-
-sum  : (ident | lit) TkPlus (ident | lit);
-
-sus  : (ident | lit) TkMinus (ident | lit);
-
-mult : (ident | lit) TkMult (ident | lit);
-
-neg  : TkMinus (ident | lit);
-
-mayor: (ident | lit) TkGreater (ident | lit);
-
-menor: (ident | lit) TkLess (ident | lit);
-
-mayorig: (ident | lit) TkGeq (ident | lit);
-
-menorig: (ident | lit) TkLeq (ident | lit);
-
-desig: (ident | lit) TkNEqual (ident | lit);
-
-y    : (ident | lit) TkAnd (ident | lit);
-
-o    : (ident | lit) TkOr (ident | lit);
-
-no   : TkNot (ident | lit);
-
-conc : (lit | ident) TkConcat conc*
-     | (lit | ident) TkConcat (lit | ident)
-     ;
-
 ident: TkId;
 
 readA: TkId TkOBracket TkNum TkCBracket;
@@ -77,3 +11,72 @@ lit  : TkNum
      | TkString
      | TkOBracket TkNum TkSoForth TkNum TkCBracket
      ;
+
+neg  : TkMinus (ident | lit | readA);
+
+mult : (ident | lit | readA) TkMult (ident | lit | readA);
+
+add  : (ident | lit | readA) TkPlus (ident | lit | readA);
+
+minus: (ident | lit | readA) TkMinus (ident | lit | readA);
+
+great: (ident | lit | readA) TkGreater (ident | lit | readA);
+
+less : (ident | lit | readA) TkLess (ident | lit | readA);
+
+geq  : (ident | lit | readA) TkGeq (ident | lit | readA);
+
+leq  : (ident | lit | readA) TkLeq (ident | lit | readA);
+
+eq   : (ident | lit | readA) TkEqual (ident | lit | readA);
+
+neq  : (ident | lit | readA) TkNEqual (ident | lit | readA);
+
+and  : (ident | lit | readA) TkAnd (ident | lit | readA);
+
+or   : (ident | lit | readA) TkOr (ident | lit | readA);
+
+not  : TkNot (ident | lit | readA);
+
+conc : (ident | lit | readA) TkConcat conc*
+     | (ident | lit | readA) TkConcat (ident | lit | readA)
+     ;
+
+op   : neg
+     | mult
+     | add 
+     | minus 
+     | great
+     | less
+     | not
+     | geq
+     | leq
+     | and
+     | or
+     | eq
+     | neq
+     | conc
+     ;
+
+asig : TkId TkAsig (lit | op);
+
+print: TkPrint (op | lit | ident | readA);
+
+type : TkInt
+     | TkBool
+     | TkArray TkOBracket TkNum TkSoForth TkNum TkCBracket
+     ;
+
+decl : TkId (TkComma TkId)* TkTwoPoints type;
+
+seq  : decl (TkSemicolon decl)+ (TkSemicolon seq)*
+     | asig (TkSemicolon seq)*
+     | print (TkSemicolon seq)*
+     ;
+
+declaration   : TkDeclare (seq | decl);
+
+block: TkOBlock 
+       declaration*
+       seq
+       TkCBlock;

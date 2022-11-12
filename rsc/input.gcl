@@ -1,14 +1,7 @@
 |[
-  declare x: int
-    x := 0;
-    _ := 11;
-    _1 := 20;
-  
-  if -5 <= x /\ x < 0 -->
-    print "Del -5 al 0"
-  [] x == 0 -->
-    print "Tengo un cero"
-  [] 1 <= x /\ x < 100 -->
-    print "Del 1 al 100"
-  fi
+  declare 
+    x, y: int
+  x := 5;
+  y := 6;
+  print x
 ]|

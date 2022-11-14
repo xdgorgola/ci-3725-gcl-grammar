@@ -1,7 +1,6 @@
 grammar GCLGrammar; 
 import GCLLexer;
 
-ident: TkId;
 
 readA: TkId TkOBracket TkNum TkCBracket;
 
@@ -12,55 +11,72 @@ lit  : TkNum
      | TkOBracket TkNum TkSoForth TkNum TkCBracket
      ;
 
-neg  : TkMinus (ident | lit | readA);
+expNum    : TkMinus expNum
+          | expNum op=TkMult expNum
+          | expNum op=(TkPlus | TkMinus) expNum
+          | (TkId | lit | readA)
+          ;
 
-mult : (ident | lit | readA) TkMult (ident | lit | readA);
+expLogNum : expNum op=(TkLeq | TkLess) expNum
+          | expNum op=(TkGeq | TkGreater) expNum
+          | expNum op=(TkEqual | TkNEqual) expNum
+          ;
 
-add  : (ident | lit | readA) TkPlus (ident | lit | readA);
+expLog    : TkNot expLog
+          | expLog op=TkAnd expLog
+          | expLog op=TkOr expLog
+          | expLog op=(TkEqual | TkNEqual) expLog
+          | (TkTrue | TkFalse)
+          | expLogNum
+          ;
+     
+//neg  : TkMinus (TkId | lit | readA);
+//
+//mult : (TkId | lit | readA) TkMult (TkId | lit | readA);
+//
+//add  : (TkId | lit | readA) TkPlus (TkId | lit | readA);
+//
+//minus: (TkId | lit | readA) TkMinus (TkId | lit | readA);
 
-minus: (ident | lit | readA) TkMinus (ident | lit | readA);
+//great: (TkId | lit | readA) TkGreater (TkId | lit | readA);
+//
+//less : (TkId | lit | readA) TkLess (TkId | lit | readA);
+//
+//geq  : (TkId | lit | readA) TkGeq (TkId | lit | readA);
+//
+//leq  : (TkId | lit | readA) TkLeq (TkId | lit | readA);
+//
+//eq   : (TkId | lit | readA) TkEqual (TkId | lit | readA);
+//
+//neq  : (TkId | lit | readA) TkNEqual (TkId | lit | readA);
+//
+//and  : (TkId | lit | readA) TkAnd (TkId | lit | readA);
+//
+//or   : (TkId | lit | readA) TkOr (TkId | lit | readA);
+//
+//not  : TkNot (TkId | lit | readA);
 
-great: (ident | lit | readA) TkGreater (ident | lit | readA);
+conc : (TkId | lit | readA) TkConcat ((TkId | lit | readA) | conc) ; // No seguro. Revisar flavi.
 
-less : (ident | lit | readA) TkLess (ident | lit | readA);
+//op   : neg
+//     | mult
+//     | add 
+//     | minus 
+//     | great
+//     | less
+//     | not
+//     | geq
+//     | leq
+//     | and
+//     | or
+//     | eq
+//     | neq
+//     | conc
+//     ;
 
-geq  : (ident | lit | readA) TkGeq (ident | lit | readA);
+asig : TkId TkAsig (lit | conc);
 
-leq  : (ident | lit | readA) TkLeq (ident | lit | readA);
-
-eq   : (ident | lit | readA) TkEqual (ident | lit | readA);
-
-neq  : (ident | lit | readA) TkNEqual (ident | lit | readA);
-
-and  : (ident | lit | readA) TkAnd (ident | lit | readA);
-
-or   : (ident | lit | readA) TkOr (ident | lit | readA);
-
-not  : TkNot (ident | lit | readA);
-
-conc : (ident | lit | readA) TkConcat conc*
-     | (ident | lit | readA) TkConcat (ident | lit | readA)
-     ;
-
-op   : neg
-     | mult
-     | add 
-     | minus 
-     | great
-     | less
-     | not
-     | geq
-     | leq
-     | and
-     | or
-     | eq
-     | neq
-     | conc
-     ;
-
-asig : TkId TkAsig (lit | op);
-
-print: TkPrint (op | lit | ident | readA);
+print: TkPrint (conc | lit | TkId | readA);
 
 type : TkInt
      | TkBool
@@ -76,7 +92,4 @@ seq  : decl (TkSemicolon decl)+ (TkSemicolon seq)*
 
 declaration   : TkDeclare (seq | decl);
 
-block: TkOBlock 
-       declaration*
-       seq
-       TkCBlock;
+block: TkOBlock declaration* seq TkCBlock; // (seq* | ins*)

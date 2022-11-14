@@ -1,6 +1,11 @@
 |[
     declare
-    a, b : int;
-    x, y : array[1..2];
-    _a, _b, _c : bool
+        a, b : int;
+        x, y : array[1..2];
+        _a, _b, _c : bool
+    
+    a := 1;
+    b := 2;
+    c := 3;
+    d := 4
 ]|

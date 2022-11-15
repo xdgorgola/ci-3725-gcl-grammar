@@ -2,7 +2,11 @@ grammar GCLGrammar;
 import GCLLexer;
 
 // Valores
-readA: TkId TkOBracket (TkNum | TkId) TkCBracket;
+writeA    : TkId  TkOpenPar expNum TkTwoPoints (TkId | lit) TkClosePar
+          | writeA TkOpenPar expNum TkTwoPoints (TkId | lit) TkClosePar
+          ;
+
+readA     : (writeA | TkId) TkOBracket (TkNum | TkId) TkCBracket;
 
 boolLit   : TkTrue
           | TkFalse
@@ -10,7 +14,8 @@ boolLit   : TkTrue
     
 lit  : TkNum 
      | TkString
-     | TkOBracket TkNum TkSoForth TkNum TkCBracket
+     | TkTrue
+     | TkFalse
      ;
 
 
@@ -45,7 +50,7 @@ conc : (TkId | lit | readA) TkConcat (TkId | lit | readA)
      | conc TkConcat (TkId | lit | readA)
      ; // No seguro.
 
-asig : TkId TkAsig (expNum | conc);
+asig : TkId TkAsig (TkId | lit | expNum | expLog | expLogNum | conc | writeA) (TkComma (TkId | lit | expNum | expLog | expLogNum | conc | writeA))*;
 
 print: TkPrint (conc | lit | TkId | readA);
 
@@ -64,11 +69,11 @@ then : expLog
      | expLogNum
      ;
 
-ifb  : then TkArrow (inst | seq) ;
+ifBody  : then TkArrow (inst | seq) ;
 
-guard: guard TkGuard ifb
-     | ifb TkGuard ifb
-     | ifb
+guard: guard TkGuard ifBody
+     | ifBody TkGuard ifBody
+     | ifBody
      ;
 
 ifOp  : TkIf guard TkFi;
@@ -84,7 +89,8 @@ doOp   : TkDo then TkArrow (inst | seq) TkOd;
 
 // Secuencias
 seqDecl   : decl TkSemicolon decl
-          | seqDecl TkSemicolon decl ;
+          | seqDecl TkSemicolon decl 
+          ;
 
 //seq  : decl (TkSemicolon seq)
 //     | inst (TkSemicolon seq)+ #instSeq
@@ -109,6 +115,6 @@ seq  : inst TkSemicolon inst
 
 declarationBlock   : TkDeclare (decl | seqDecl);
 
-block     : TkOBlock declarationBlock (inst | seq+) TkCBlock
-          | TkOBlock (inst | seq+) TkCBlock
+block     : TkOBlock declarationBlock (inst | seq) TkCBlock
+          | TkOBlock (inst | seq) TkCBlock
           ;

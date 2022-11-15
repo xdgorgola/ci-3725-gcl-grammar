@@ -1,0 +1,26 @@
+|[
+    declare 
+        x, y, w, i: int
+    x := 5;
+    y := 6;
+    w := 19;
+    print x;
+    if 2 <= b /\ b <= 5 /\ true--> print b
+    [] y[2] < b /\ b < y[2] --> print a
+    [] y[3] >= b \/ b >= y[3] -->
+        |[
+            declare z: int
+            print a . b;
+            z := 1;
+            print z
+        ]|
+    fi;
+    for j in 2 to 5 -->
+        print j . ":" . " "
+    rof;
+    i := 3
+    //do i < 10 -->
+    //    print "Still here!";
+    //    i := i+1
+    //od
+]|

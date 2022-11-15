@@ -15,31 +15,35 @@ lit  : TkNum
 
 
 // Expresiones
-expNum    : op=TkMinus expNum #enMinusNum
-          | expNum op=TkMult expNum #enMult
-          | expNum op=(TkPlus | TkMinus) expNum #enPlusMinus
-          | TkOpenPar expNum TkClosePar #enPar
-          | (TkId | lit | readA) #enVal
+expNum    : op=TkMinus a=expNum #enMinusNum
+          | a=expNum op=TkMult b=expNum #enMult
+          | a=expNum op=(TkPlus | TkMinus) b=expNum #enPlusMinus
+          | TkOpenPar a=expNum TkClosePar #enPar
+          | a=TkId #enIDVal
+          | a=TkNum #enLitVal
+          | a=readA #enAVal
           ;
 
-expLogNum : expLogNum op=(TkLeq | TkLess) expLogNum #elnLeqLess
-          | expLogNum op=(TkGeq | TkGreater) expLogNum #elnGeqGreat
-          | expLogNum op=(TkEqual | TkNEqual) expLogNum #elnEqNEq
-          | TkOpenPar expLogNum TkClosePar #elnPar
-          | expNum #elnVal
+expLogNum : a=expLogNum op=(TkLeq | TkLess) b=expLogNum #elnLeqLess
+          | a=expLogNum op=(TkGeq | TkGreater) b=expLogNum #elnGeqGreat
+          | a=expLogNum op=(TkEqual | TkNEqual) b=expLogNum #elnEqNEq
+          | TkOpenPar a=expLogNum TkClosePar #elnPar
+          | a=expNum #elnVal
           ;
 
-expLog    : TkNot expLog #elNot
-          | expLog op=TkAnd expLog #elAnd
-          | expLog op=TkOr expLog #elOr
-          | expLog op=(TkEqual | TkNEqual) expLog #elEqNEq
-          | TkOpenPar expLog TkOpenPar #elPar
+expLog    : TkNot a=expLog #elNot
+          | a=expLog op=TkAnd b=expLog #elAnd
+          | a=expLog op=TkOr b=expLog #elOr
+          | a=expLog op=(TkEqual | TkNEqual) b=expLog #elEqNEq
+          | TkOpenPar b=expLog TkOpenPar #elPar
           | (expLogNum | boolLit) #elVal
           ;
 
 
 // Instrucciones
-conc : (TkId | lit | readA) TkConcat ((TkId | lit | readA) | conc) ; // No seguro. Revisar flavi.
+conc : (TkId | lit | readA) TkConcat (TkId | lit | readA)
+     | conc TkConcat (TkId | lit | readA)
+     ; // No seguro.
 
 asig : TkId TkAsig (expNum | conc);
 
@@ -52,12 +56,7 @@ type : TkInt #tInt
      | TkArray TkOBracket expNum TkSoForth expNum TkCBracket #tArray // Pendiente de si expNum o no, pero negativos tiene que ser
      ;
 
-decl : TkId decl TkTwoPoints type #iniDeclA
-     | TkId TkTwoPoints type #iniDeclB
-     | TkComma TkId decl #nextDecl
-     | TkComma TkId #finalDecl
-     ;
-
+decl : TkId (TkComma TkId)* TkTwoPoints type ;
 
 // Bloques
 
@@ -65,7 +64,7 @@ then : expLog
      | expLogNum
      ;
 
-ifb  : then TkArrow block* seq*;
+ifb  : then TkArrow (inst | seq) ;
 
 guard: guard TkGuard ifb
      | ifb TkGuard ifb
@@ -78,27 +77,38 @@ in   : TkId TkIn (lit | TkId | readA | expNum);
 
 to   : TkTo (lit | TkId | readA | expNum);
 
-forOp  : TkFor in to TkArrow block* seq* TkRof;
+forOp  : TkFor in to TkArrow (inst | seq) TkRof;
 
-doOp   : TkDo then TkArrow block* seq* TkOd;
+doOp   : TkDo then TkArrow (inst | seq) TkOd;
 
 
 // Secuencias
-seqDecl   : TkSemicolon decl seqDecl 
-          | TkSemicolon decl
-          ;
+seqDecl   : decl TkSemicolon decl
+          | seqDecl TkSemicolon decl ;
 
-seq  : decl seqDecl
-     | forOp (TkSemicolon seq)*
-     | ifOp (TkSemicolon seq)*
-     | doOp (TkSemicolon seq)*
-     | asig (TkSemicolon seq)*
-     | print (TkSemicolon seq)*
-     | TkSkip (TkSemicolon seq)*
+//seq  : decl (TkSemicolon seq)
+//     | inst (TkSemicolon seq)+ #instSeq
+//     | inst #seqFinal
+//     ;
+
+inst : forOp
+     | ifOp
+     | doOp
+     | asig
+     | print
+     | block
+     | TkSkip
      ;
 
-declarationBlock   : TkDeclare (seq | decl);
+//(TkId | lit | readA) TkConcat (TkId | lit | readA)
+//     | conc TkConcat (TkId | lit | readA)
 
-block     : TkOBlock declarationBlock* seq* TkCBlock
+seq  : inst TkSemicolon inst
+     | seq TkSemicolon inst
+     ;
 
+declarationBlock   : TkDeclare (decl | seqDecl);
+
+block     : TkOBlock declarationBlock (inst | seq+) TkCBlock
+          | TkOBlock (inst | seq+) TkCBlock
           ;

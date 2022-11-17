@@ -75,11 +75,11 @@ decl : TkId decl TkTwoPoints type
 
 then : exp;
 
-ifBody  : then TkArrow (inst | seq);
+guardBody  : then TkArrow (inst | seq);
 
-guard: guard TkGuard ifBody
-     | ifBody TkGuard ifBody
-     | ifBody
+guard: guard TkGuard guardBody
+     | guardBody TkGuard guardBody
+     | guardBody
      ;
 
 ifOp  : TkIf guard TkFi;

@@ -1,15 +1,17 @@
 grammar GCLGrammar; 
 import GCLLexer;
 
-writeABody: TkOpenPar exp TkTwoPoints (TkId | exp) TkClosePar; // pendiente con exp aca!
+// Array related
+sliceBody : TkOpenPar (TkId | exp | readA) TkTwoPoints (TkId | exp | readA) TkClosePar; // pendiente con exp aca!
 
-// Valores
-writeA    : TkId  writeABody
-          | writeA writeABody
+sliceA    : TkId  sliceBody
+          | sliceA sliceBody
           ;
 
-readA     : (writeA | TkId) TkOBracket (TkId | exp) TkCBracket; // pendiente exp aca!
+readA     : (sliceA | TkId) TkOBracket (TkId | exp | readA) TkCBracket; // pendiente exp aca!
 
+
+// Expresiones
 numericLit     : TkMinus numericLit
                | TkNum // pendiente con esto y los arreglos?
                ; 
@@ -29,24 +31,25 @@ exp       : TkOpenPar a=exp TkClosePar #parExp
           | a=(TkTrue | TkFalse) #boolExp
           ;
 
+
 // Instrucciones
-concateneable  : TkId
+concatenable   : TkId
                | TkString
                | exp
                ;
 
-concatenation  : concateneable TkConcat concateneable
-               | concatenation TkConcat concateneable
+concatenation  : concatenable TkConcat concatenable
+               | concatenation TkConcat concatenable
                | TkOpenPar concatenation TkClosePar
                ; 
 
-assigneable    : TkId 
+asignable      : TkId 
                | TkString
                | exp 
-               | writeA
+               | sliceA
                ;
 
-asig : TkId TkAsig assigneable (TkComma assigneable)*;
+asignation     : TkId TkAsig asignable (TkComma asignable)*;
 
 printeable     : concatenation 
                | exp
@@ -96,7 +99,7 @@ seqDecl   : decl TkSemicolon decl
 inst : forOp
      | ifOp
      | doOp
-     | asig
+     | asignation
      | print
      | block
      | TkSkip

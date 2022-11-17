@@ -51,7 +51,8 @@ asignable      : TkId
 
 asignation     : TkId TkAsig asignable (TkComma asignable)*;
 
-printeable     : concatenation 
+printeable     : TkString
+               | concatenation 
                | exp
                ;
 
@@ -65,15 +66,16 @@ type : TkInt #tInt
      ;
 
 decl : TkId decl TkTwoPoints type 
+     | TkId TkTwoPoints type
      | TkComma TkId decl
      | TkComma TkId
      ;
 
 // Bloques
 
-then : exp ;
+then : exp;
 
-ifBody  : then TkArrow (inst | seq) ;
+ifBody  : then TkArrow (inst | seq);
 
 guard: guard TkGuard ifBody
      | ifBody TkGuard ifBody
@@ -88,7 +90,7 @@ to   : TkTo exp;
 
 forOp  : TkFor in to TkArrow (inst | seq) TkRof;
 
-doOp   : TkDo then TkArrow (inst | seq) TkOd;
+doOp   : TkDo guard TkOd;
 
 
 // Secuencias

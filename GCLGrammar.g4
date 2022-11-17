@@ -1,9 +1,11 @@
 grammar GCLGrammar; 
 import GCLLexer;
 
+writeABody: TkOpenPar exp TkTwoPoints (TkId | exp) TkClosePar;
+
 // Valores
-writeA    : TkId  TkOpenPar exp TkTwoPoints (TkId | exp) TkClosePar
-          | writeA TkOpenPar exp TkTwoPoints (TkId | exp) TkClosePar
+writeA    : TkId  writeABody
+          | writeA writeABody
           ;
 
 readA     : (writeA | TkId) TkOBracket (TkId | exp) TkCBracket;
@@ -27,8 +29,7 @@ exp       : TkOpenPar a=exp TkClosePar #enPar
           | op=TkNot a=exp #elNot // pendiente con esto pq deberia permitir solo tktrue o tkfalse segun flavi pero yo no lo creo
           | <assoc=left> a=exp op=TkMult b=exp #enMult
           | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp #enPlusMinus
-          | <assoc=left> a=exp op=(TkGeq | TkGreater) b=exp #elnGeqGreat
-          | <assoc=left> a=exp op=(TkLeq | TkLess) b=exp #elnGeqGreat
+          | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp #elnGeqGreat
           | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp #elnEqNEq
           | <assoc=left> a=exp op=TkAnd b=exp #elAnd
           | <assoc=left> a=exp op=TkOr b=exp #elOr
@@ -52,7 +53,6 @@ concatenation : concateneable TkConcat concateneable
 assigneable    : TkId 
                | exp 
                | lit 
-               | concatenation 
                | writeA
                ;
 

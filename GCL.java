@@ -9,11 +9,13 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.dfa.DFA;
 
 import com.parsing.GCLGrammarLexer;
+import com.parsing.GCLGrammarParser;
 
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.ANTLRErrorListener;
+import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 
@@ -23,6 +25,7 @@ public class GCL implements ANTLRErrorListener {
     private String _input = null;
     /** Gramatica de GCL */
     private GCLGrammarLexer _gclLexer = null;
+    private GCLGrammarParser _gclParser = null;
     /** Indica si hubo un error de lexeo */
     private boolean _lexerErrorFound = false;
 
@@ -44,7 +47,8 @@ public class GCL implements ANTLRErrorListener {
             return;
         }
 
-        translator.printLexerInfo();
+        ASTPrinter visitor = new ASTPrinter(); 
+        visitor.visit(translator._gclParser.block());
     }
 
 
@@ -175,5 +179,7 @@ public class GCL implements ANTLRErrorListener {
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
         _gclLexer.removeErrorListeners();
         _gclLexer.addErrorListener(this);
+
+        _gclParser = new GCLGrammarParser(new BufferedTokenStream(_gclLexer));
     } 
 }

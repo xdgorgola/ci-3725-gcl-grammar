@@ -1,60 +1,38 @@
 grammar GCLGrammar; 
 import GCLLexer;
 
-writeABody: TkOpenPar exp TkTwoPoints (TkId | exp) TkClosePar;
+writeABody: TkOpenPar exp TkTwoPoints (TkId | exp) TkClosePar; // pendiente con exp aca!
 
 // Valores
 writeA    : TkId  writeABody
           | writeA writeABody
           ;
 
-readA     : (writeA | TkId) TkOBracket (TkId | exp) TkCBracket;
+readA     : (writeA | TkId) TkOBracket (TkId | exp) TkCBracket; // pendiente exp aca!
 
-boolLit   : TkTrue
-          | TkFalse
-          ;
-    
-// tknum y exp cuidado con estos literales
-lit  : TkString
-     | boolLit
-     ;
+numericLit     : TkMinus numericLit
+               | TkNum // pendiente con esto y los arreglos?
+               ; 
 
-
-numeric   : TkNum
-          | TkMinus TkNum // pendiente con esto y los arreglos?
-          ; 
-
-//concateneable  : TkId // No seguro que puede concatenarse.
-//               | exp
-//               | lit
-//               | readA
-//               ;
-//
-//concatenation  : concateneable TkConcat concateneable
-//               | concatenation TkConcat concateneable
-//               ; 
-
-exp       : TkOpenPar a=exp TkClosePar #enPar
-          | op=TkMinus a=exp #enMinusNum
-          | op=TkNot a=exp #elNot // pendiente con esto pq deberia permitir solo tktrue o tkfalse segun flavi pero yo no lo creo
-          | <assoc=left> a=exp op=TkMult b=exp #enMult
-          | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp #enPlusMinus
-          | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp #elnGeqGreat
-          | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp #elnEqNEq
-          | <assoc=left> a=exp op=TkAnd b=exp #elAnd
-          | <assoc=left> a=exp op=TkOr b=exp #elOr
-          | a=TkId #enIDVal
-          | a=TkNum #enLitVal
-          | a=readA #enAVal
-          | a=boolLit #expBoolVal
+exp       : TkOpenPar a=exp TkClosePar #parExp
+          | op=TkMinus a=exp #unMinExp
+          | op=TkNot a=exp #notExp // pendiente con esto pq deberia permitir solo tktrue o tkfalse segun flavi pero yo no lo creo
+          | <assoc=left> a=exp op=TkMult b=exp #multExp
+          | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp #minPlusExp
+          | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp #ordExp
+          | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp #eqExp
+          | <assoc=left> a=exp op=TkAnd b=exp #andExp
+          | <assoc=left> a=exp op=TkOr b=exp #orExp
+          | a=TkId #idExp
+          | a=TkNum #numExp
+          | a=readA #readAExp
+          | a=(TkTrue | TkFalse) #boolExp
           ;
 
 // Instrucciones
-
-concateneable  : TkId // No seguro que puede concatenarse.
+concateneable  : TkId
+               | TkString
                | exp
-               | lit
-               | readA
                ;
 
 concatenation  : concateneable TkConcat concateneable
@@ -63,8 +41,8 @@ concatenation  : concateneable TkConcat concateneable
                ; 
 
 assigneable    : TkId 
+               | TkString
                | exp 
-               | lit 
                | writeA
                ;
 
@@ -72,9 +50,6 @@ asig : TkId TkAsig assigneable (TkComma assigneable)*;
 
 printeable     : concatenation 
                | exp
-               | lit 
-               | TkId 
-               | readA
                ;
 
 print     : TkPrint printeable;
@@ -83,10 +58,13 @@ print     : TkPrint printeable;
 // Declaraciones
 type : TkInt #tInt
      | TkBool #tBool
-     | TkArray TkOBracket exp TkSoForth exp TkCBracket #tArray // Pendiente de si expNum o no, pero negativos tiene que ser
+     | TkArray TkOBracket numericLit TkSoForth numericLit TkCBracket #tArray
      ;
 
-decl : TkId (TkComma TkId)* TkTwoPoints type ;
+decl : TkId decl TkTwoPoints type 
+     | TkComma TkId decl
+     | TkComma TkId
+     ;
 
 // Bloques
 
@@ -101,9 +79,9 @@ guard: guard TkGuard ifBody
 
 ifOp  : TkIf guard TkFi;
 
-in   : TkId TkIn (lit | TkId | readA | exp);
+in   : TkId TkIn exp;
 
-to   : TkTo (lit | TkId | readA | exp);
+to   : TkTo exp;
 
 forOp  : TkFor in to TkArrow (inst | seq) TkRof;
 

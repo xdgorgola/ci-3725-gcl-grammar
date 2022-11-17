@@ -24,6 +24,16 @@ numeric   : TkNum
           | TkMinus TkNum // pendiente con esto y los arreglos?
           ; 
 
+//concateneable  : TkId // No seguro que puede concatenarse.
+//               | exp
+//               | lit
+//               | readA
+//               ;
+//
+//concatenation  : concateneable TkConcat concateneable
+//               | concatenation TkConcat concateneable
+//               ; 
+
 exp       : TkOpenPar a=exp TkClosePar #enPar
           | op=TkMinus a=exp #enMinusNum
           | op=TkNot a=exp #elNot // pendiente con esto pq deberia permitir solo tktrue o tkfalse segun flavi pero yo no lo creo
@@ -40,15 +50,17 @@ exp       : TkOpenPar a=exp TkClosePar #enPar
           ;
 
 // Instrucciones
+
 concateneable  : TkId // No seguro que puede concatenarse.
                | exp
                | lit
                | readA
                ;
 
-concatenation : concateneable TkConcat concateneable
-     | concatenation TkConcat concateneable
-     ; 
+concatenation  : concateneable TkConcat concateneable
+               | concatenation TkConcat concateneable
+               | TkOpenPar concatenation TkClosePar
+               ; 
 
 assigneable    : TkId 
                | exp 

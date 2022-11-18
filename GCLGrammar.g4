@@ -2,13 +2,13 @@ grammar GCLGrammar;
 import GCLLexer;
 
 // Array related
-sliceBody : TkOpenPar (TkId | exp | readA) TkTwoPoints (TkId | exp | readA) TkClosePar; // pendiente con exp aca!
+writeABody : TkOpenPar exp TkTwoPoints exp TkClosePar; // pendiente con exp aca!
 
-sliceA    : TkId  sliceBody
-          | sliceA sliceBody
+writeA    : TkId  writeABody
+          | writeA writeABody
           ;
 
-readA     : (sliceA | TkId) TkOBracket (TkId | exp | readA) TkCBracket; // pendiente exp aca!
+readA     : (writeA | TkId) TkOBracket (TkId | exp | readA) TkCBracket; // pendiente exp aca!
 
 
 // Expresiones
@@ -46,7 +46,7 @@ concatenation  : concatenable TkConcat concatenable
 asignable      : TkId 
                | TkString
                | exp 
-               | sliceA
+               | writeA
                ;
 
 asignation     : TkId TkAsig asignable (TkComma asignable)*;

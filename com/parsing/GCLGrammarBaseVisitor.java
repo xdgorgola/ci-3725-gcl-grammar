@@ -137,7 +137,7 @@ public class GCLGrammarBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitConcateneable(GCLGrammarParser.ConcateneableContext ctx) { return visitChildren(ctx); }
+	@Override public T visitConcatenable(GCLGrammarParser.ConcatenableContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -151,14 +151,21 @@ public class GCLGrammarBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAssigneable(GCLGrammarParser.AssigneableContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAsignable(GCLGrammarParser.AsignableContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAsig(GCLGrammarParser.AsigContext ctx) { return visitChildren(ctx); }
+	@Override public T visitArrayInit(GCLGrammarParser.ArrayInitContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitAsignation(GCLGrammarParser.AsignationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -214,7 +221,7 @@ public class GCLGrammarBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIfBody(GCLGrammarParser.IfBodyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitGuardBody(GCLGrammarParser.GuardBodyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

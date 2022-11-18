@@ -8,7 +8,9 @@ writeA    : TkId  writeABody
           | writeA writeABody
           ;
 
-readA     : (writeA | TkId) TkOBracket (TkId | exp | readA) TkCBracket; // pendiente exp aca!
+readA     : writeA  TkOBracket exp TkCBracket
+          | TkId TkOBracket exp TkCBracket
+          ;
 
 
 // Expresiones
@@ -43,13 +45,17 @@ concatenation  : concatenable TkConcat concatenable
                | TkOpenPar concatenation TkClosePar
                ; 
 
-asignable      : TkId 
-               | TkString
-               | exp 
+asignable      : exp 
                | writeA
                ;
 
-asignation     : TkId TkAsig asignable (TkComma asignable)*;
+arrayInit      : arrayInit TkComma asignable
+               | asignable TkComma asignable
+               ;
+
+asignation     : TkId TkAsig asignable 
+               | TkId TkAsig arrayInit
+               ;
 
 printeable     : TkString
                | concatenation 

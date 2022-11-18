@@ -19,7 +19,7 @@ import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 
 
-public class GCL implements ANTLRErrorListener {
+public class GCL {
 
     /** Input recibido en forma de string */
     private String _input = null;
@@ -122,34 +122,8 @@ public class GCL implements ANTLRErrorListener {
         } 
     }
 
-
-    @Override
-    public void reportAmbiguity(Parser arg0, DFA arg1, int arg2, int arg3, boolean arg4, BitSet arg5,
-            ATNConfigSet arg6) {
-        // TODO No usado
-        throw new UnsupportedOperationException("No implementado aun.");
-    }
-
-
-    @Override
-    public void reportAttemptingFullContext(Parser arg0, DFA arg1, int arg2, int arg3, BitSet arg4, ATNConfigSet arg5) {
-        // TODO No usado
-        throw new UnsupportedOperationException("No implementado aun.");
-    }
-
-
-    @Override
-    public void reportContextSensitivity(Parser arg0, DFA arg1, int arg2, int arg3, int arg4, ATNConfigSet arg5) {
-        // TODO No usado
-        throw new UnsupportedOperationException("No implementado aun.");
-    }
-
-
-    @Override
-    public void syntaxError(Recognizer<?, ?> arg0, Object arg1, int arg2, int arg3, String arg4,
-            RecognitionException arg5) {
-
-        System.out.format("Error: Unexpected character \"%s\" in row %s, column %s\n", arg5.toString().split("'")[1], arg2, arg3 + 1);
+    public void receiveLexerError()
+    {
         _lexerErrorFound = true;
     }
 
@@ -177,9 +151,11 @@ public class GCL implements ANTLRErrorListener {
         _lexerErrorFound = false;
 
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
-        _gclLexer.removeErrorListeners();
-        _gclLexer.addErrorListener(this);
+        _gclLexer.removeErrorListeners(); // quitar por los momentos ya que sino, no funciona en el parser!
+        _gclLexer.addErrorListener(new GCLLexeErrorListener(this));
 
         _gclParser = new GCLGrammarParser(new BufferedTokenStream(_gclLexer));
+        _gclParser.removeErrorListeners();
+        _gclParser.addErrorListener(new GCLLexeErrorListener(this)); //HACER OTRO ERROR LISTENER PARA EL PARSER PORQUE ESTE CRASHEA EL PARSER
     } 
 }

@@ -126,11 +126,11 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMultExp(GCLGrammarParser.MultExpContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#concateneable}.
+	 * Visit a parse tree produced by {@link GCLGrammarParser#concatenable}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitConcateneable(GCLGrammarParser.ConcateneableContext ctx);
+	T visitConcatenable(GCLGrammarParser.ConcatenableContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#concatenation}.
 	 * @param ctx the parse tree
@@ -138,17 +138,23 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitConcatenation(GCLGrammarParser.ConcatenationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#assigneable}.
+	 * Visit a parse tree produced by {@link GCLGrammarParser#asignable}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssigneable(GCLGrammarParser.AssigneableContext ctx);
+	T visitAsignable(GCLGrammarParser.AsignableContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#asig}.
+	 * Visit a parse tree produced by {@link GCLGrammarParser#arrayInit}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAsig(GCLGrammarParser.AsigContext ctx);
+	T visitArrayInit(GCLGrammarParser.ArrayInitContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GCLGrammarParser#asignation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAsignation(GCLGrammarParser.AsignationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#printeable}.
 	 * @param ctx the parse tree
@@ -195,11 +201,11 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitThen(GCLGrammarParser.ThenContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#ifBody}.
+	 * Visit a parse tree produced by {@link GCLGrammarParser#guardBody}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIfBody(GCLGrammarParser.IfBodyContext ctx);
+	T visitGuardBody(GCLGrammarParser.GuardBodyContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#guard}.
 	 * @param ctx the parse tree

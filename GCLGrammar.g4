@@ -78,25 +78,25 @@ decl : TkId decl TkTwoPoints type
 
 // Bloques
 
-then : exp;
+then : exp TkArrow (inst | seq);
 
-guardBody  : then TkArrow (inst | seq);
+in   : TkId TkIn to;
 
-guard: guard TkGuard guardBody
-     | guardBody TkGuard guardBody
-     | guardBody
+to   : exp TkTo exp;
+
+forOp     : TkFor in TkArrow (inst | seq) TkRof;  
+
+guard     : then TkGuard then
+          | guard TkGuard then
+          ;
+
+ifOp : TkIf guard TkFi
+     | TkIf then TkFi
      ;
 
-ifOp  : TkIf guard TkFi;
-
-in   : TkId TkIn exp;
-
-to   : TkTo exp;
-
-forOp  : TkFor in to TkArrow (inst | seq) TkRof;
-
-doOp   : TkDo guard TkOd;
-
+doOp : TkDo guard TkOd
+     | TkDo then TkOd
+     ;
 
 // Secuencias
 seqDecl   : decl TkSemicolon decl

@@ -201,24 +201,6 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitThen(GCLGrammarParser.ThenContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#guardBody}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitGuardBody(GCLGrammarParser.GuardBodyContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#guard}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitGuard(GCLGrammarParser.GuardContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#ifOp}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIfOp(GCLGrammarParser.IfOpContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#in}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -236,6 +218,18 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForOp(GCLGrammarParser.ForOpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GCLGrammarParser#guard}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGuard(GCLGrammarParser.GuardContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GCLGrammarParser#ifOp}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIfOp(GCLGrammarParser.IfOpContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#doOp}.
 	 * @param ctx the parse tree

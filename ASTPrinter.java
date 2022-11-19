@@ -1,3 +1,4 @@
+import com.parsing.GCLGrammarBaseVisitor;
 import com.parsing.GCLGrammarParser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -81,6 +82,18 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     }
 
     @Override
+    public Void visitUnMinExp(GCLGrammarParser.UnMinExpContext ctx)
+    {
+        return addPrintVisitLeave("Minus", ctx);
+    }
+
+    @Override
+    public Void visitNotExp(GCLGrammarParser.NotExpContext ctx)
+    {
+        return addPrintVisitLeave("Not", ctx);
+    }
+
+    @Override
     public Void visitMinPlusExp(GCLGrammarParser.MinPlusExpContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++);
@@ -106,9 +119,59 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitUnMinExp(GCLGrammarParser.UnMinExpContext ctx)
+    public Void visitOrdExp(GCLGrammarParser.OrdExpContext ctx)
     {
-        return addPrintVisitLeave("Declare", ctx);
+        StringBuilder pref = generatePrefix(_currRealDepth++);
+        switch (ctx.op.getType()) {
+            case GCLGrammarParser.TkLeq:
+                pref.append("Leq");
+                break;
+            case GCLGrammarParser.TkLess:
+                pref.append("Less");
+                break;
+            case GCLGrammarParser.TkGeq:
+                pref.append("Geq");
+                break;
+            case GCLGrammarParser.TkGreater:
+                pref.append("Greater");
+                break;
+        }
+
+        System.out.println(pref.toString());
+        visitChildren(ctx);
+        _currRealDepth--;
+        return null;
+    }
+
+    @Override
+    public Void visitEqExp(GCLGrammarParser.EqExpContext ctx)
+    {
+        StringBuilder pref = generatePrefix(_currRealDepth++);
+        switch (ctx.op.getType()) {
+            case GCLGrammarParser.TkEqual:
+                pref.append("Equal");
+                break;
+            case GCLGrammarParser.TkNEqual:
+                pref.append("NEqual");
+                break;
+        }
+
+        System.out.println(pref.toString());
+        visitChildren(ctx);
+        _currRealDepth--;
+        return null;
+    }
+
+    @Override
+    public Void visitAndExp(GCLGrammarParser.AndExpContext ctx)
+    {
+        return addPrintVisitLeave("And", ctx);
+    }
+
+    @Override
+    public Void visitOrExp(GCLGrammarParser.OrExpContext ctx)
+    {
+        return addPrintVisitLeave("Or", ctx);
     }
 
     @Override
@@ -178,7 +241,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
         System.out.println(pref.toString());
 
         TerminalNode id = ctx.TkId();
-        pref = generatePrefix(_currRealDepth).append(id.getText());
+        pref = generatePrefix(_currRealDepth).append("Ident: ").append(id.getText());
         System.out.println(pref);
 
         visitChildren(ctx);
@@ -250,9 +313,19 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitIn(GCLGrammarParser.InContext ctx)
+    public Void visitIn(GCLGrammarParser.InContext ctx) // epa tkid aca xD?
     {
-        return addPrintVisitLeave("In", ctx);
+        StringBuilder pref = generatePrefix(_currRealDepth++).append("In");
+        System.out.println(pref.toString());
+
+        TerminalNode id = ctx.TkId();
+        pref = generatePrefix(_currRealDepth).append(id.getText());
+        System.out.println(pref);
+
+        visitChildren(ctx);
+        _currRealDepth--;
+        return null;
+        //return addPrintVisitLeave("In", ctx);
     }
 
     @Override
@@ -307,16 +380,6 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitIfOp(GCLGrammarParser.IfOpContext ctx)
     {
         return addPrintVisitLeave("If", ctx);
-    }
-
-    @Override
-    public Void visitGuardBody(GCLGrammarParser.GuardBodyContext ctx)
-    {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        System.out.println(pref.toString());
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;
     }
 
     @Override

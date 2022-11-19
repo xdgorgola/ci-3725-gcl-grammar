@@ -35,8 +35,7 @@ exp       : TkOpenPar a=exp TkClosePar #parExp
 
 
 // Instrucciones
-concatenable   : TkId
-               | TkString
+concatenable   : TkString
                | exp
                ;
 

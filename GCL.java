@@ -1,22 +1,14 @@
 import java.io.File;
-import java.util.BitSet;
 import java.util.Scanner;
 import java.util.Iterator;
 import java.io.FileNotFoundException;
 
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.dfa.DFA;
-
 import com.parsing.GCLGrammarLexer;
 import com.parsing.GCLGrammarParser;
 
-import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.atn.ATNConfigSet;
-import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.BufferedTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
 
 
 public class GCL {
@@ -152,10 +144,10 @@ public class GCL {
 
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
         _gclLexer.removeErrorListeners(); // quitar por los momentos ya que sino, no funciona en el parser!
-        _gclLexer.addErrorListener(new GCLLexeErrorListener(this));
+        _gclLexer.addErrorListener(new GCLLexerErrorListener(this));
 
         _gclParser = new GCLGrammarParser(new BufferedTokenStream(_gclLexer));
         _gclParser.removeErrorListeners();
-        _gclParser.addErrorListener(new GCLLexeErrorListener(this)); //HACER OTRO ERROR LISTENER PARA EL PARSER PORQUE ESTE CRASHEA EL PARSER
+        _gclParser.addErrorListener(new GCLLexerErrorListener(this)); //HACER OTRO ERROR LISTENER PARA EL PARSER PORQUE ESTE CRASHEA EL PARSER
     } 
 }

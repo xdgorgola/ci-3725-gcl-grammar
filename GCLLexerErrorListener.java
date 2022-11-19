@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 
-public class GCLErrorListener implements ANTLRErrorListener {
+public class GCLLexerErrorListener implements ANTLRErrorListener {
     
     private GCL translator;
     
@@ -43,7 +43,7 @@ public class GCLErrorListener implements ANTLRErrorListener {
     }
 
     
-    public GCLErrorListener(GCL source)
+    public GCLLexerErrorListener(GCL source)
     {
         translator = source;
     }

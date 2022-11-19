@@ -1,5 +1,7 @@
-import com.parsing.GCLGrammarBaseVisitor;
 import com.parsing.GCLGrammarParser;
+
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
@@ -11,37 +13,32 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
             ;
         return builder;
     }
-
-    @Override
-    public Void visitBlock(GCLGrammarParser.BlockContext ctx) {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Block");
+    
+    private Void addPrintVisitLeave(String txt, ParserRuleContext ctx)
+    {
+        StringBuilder pref = generatePrefix(_currRealDepth++).append(txt);
         System.out.println(pref.toString());
 
         visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
+    
+
+    @Override
+    public Void visitBlock(GCLGrammarParser.BlockContext ctx) {
+        return addPrintVisitLeave("Block", ctx);
+    }
 
     @Override
     public Void visitDeclarationBlock(GCLGrammarParser.DeclarationBlockContext ctx) {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Declare");
-        System.out.println(pref.toString());
-
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("Declare", ctx);
     }
 
     @Override
     public Void visitSeqDecl(GCLGrammarParser.SeqDeclContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++);
-        pref.append("Sequencing");
-        System.out.println(pref);
-        visitChildren(ctx);
-
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("Sequencing", ctx);
     }
 
     @Override
@@ -80,12 +77,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitSeq(GCLGrammarParser.SeqContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Sequencing");
-        System.out.println(pref);
-        visitChildren(ctx);
-
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("Sequencing", ctx);
     }
 
     @Override
@@ -110,22 +102,13 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitMultExp(GCLGrammarParser.MultExpContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Mult");
-        System.out.println(pref.toString());
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("Mult", ctx);
     }
 
     @Override
     public Void visitUnMinExp(GCLGrammarParser.UnMinExpContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Minus");
-        System.out.println(pref.toString());
-        visitChildren(ctx);
-        
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("Declare", ctx);
     }
 
     @Override
@@ -185,20 +168,18 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitArrayInit(GCLGrammarParser.ArrayInitContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Comma ");
-        System.out.println(pref.toString());
-
-        visitChildren(ctx);
-
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("Comma", ctx);
     }
 
     @Override
     public Void visitAsignation(GCLGrammarParser.AsignationContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("Asignation: ");
+        StringBuilder pref = generatePrefix(_currRealDepth++).append("Asig");
         System.out.println(pref.toString());
+
+        TerminalNode id = ctx.TkId();
+        pref = generatePrefix(_currRealDepth).append(id.getText());
+        System.out.println(pref);
 
         visitChildren(ctx);
 
@@ -209,7 +190,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitReadA(GCLGrammarParser.ReadAContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("ReadArray: ");
+        StringBuilder pref = generatePrefix(_currRealDepth++).append("ReadArray");
         System.out.println(pref.toString());
 
         if (ctx.TkId() != null)
@@ -244,11 +225,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitWriteABody(GCLGrammarParser.WriteABodyContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("TwoPoints ");
-        System.out.println(pref.toString());
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;
+        return addPrintVisitLeave("TwoPoints", ctx);
     }
 
     @Override
@@ -264,5 +241,99 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         visitChildren(ctx);
         return null;
+    }
+
+    @Override
+    public Void visitForOp(GCLGrammarParser.ForOpContext ctx)
+    {
+        return addPrintVisitLeave("For", ctx);
+    }
+
+    @Override
+    public Void visitIn(GCLGrammarParser.InContext ctx)
+    {
+        return addPrintVisitLeave("In", ctx);
+    }
+
+    @Override
+    public Void visitTo(GCLGrammarParser.ToContext ctx)
+    {
+        return addPrintVisitLeave("To", ctx);
+    }
+
+    @Override
+    public Void visitPrinteable(GCLGrammarParser.PrinteableContext ctx)
+    {
+        if (ctx.TkString() != null) // pendiente
+        {
+            StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
+            System.out.println(pref.toString());
+            _currRealDepth--;
+            return null;
+        }
+
+        visitChildren(ctx);
+        return null;
+    }
+
+    @Override
+    public Void visitPrint(GCLGrammarParser.PrintContext ctx)
+    {
+        return addPrintVisitLeave("Print", ctx);
+    }
+
+    @Override
+    public Void visitConcatenable(GCLGrammarParser.ConcatenableContext ctx)
+    {
+        if (ctx.TkString() != null)
+        {
+            StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
+            System.out.println(pref.toString());
+            _currRealDepth--;
+            return null;
+        }
+
+        visitChildren(ctx);
+        return null;
+    }
+
+    @Override
+    public Void visitConcatenation(GCLGrammarParser.ConcatenationContext ctx)
+    {
+        return addPrintVisitLeave("Concat", ctx);
+    }
+
+    @Override
+    public Void visitIfOp(GCLGrammarParser.IfOpContext ctx)
+    {
+        return addPrintVisitLeave("If", ctx);
+    }
+
+    @Override
+    public Void visitGuardBody(GCLGrammarParser.GuardBodyContext ctx)
+    {
+        StringBuilder pref = generatePrefix(_currRealDepth++).append("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        System.out.println(pref.toString());
+        visitChildren(ctx);
+        _currRealDepth--;
+        return null;
+    }
+
+    @Override
+    public Void visitGuard(GCLGrammarParser.GuardContext ctx)
+    {
+        return addPrintVisitLeave("Guard", ctx);
+    }
+
+    @Override
+    public Void visitThen(GCLGrammarParser.ThenContext ctx)
+    {
+        return addPrintVisitLeave("Then", ctx);
+    }
+
+    @Override
+    public Void visitDoOp(GCLGrammarParser.DoOpContext ctx)
+    {
+        return addPrintVisitLeave("Do", ctx);
     }
 }

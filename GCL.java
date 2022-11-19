@@ -20,6 +20,7 @@ public class GCL {
     private GCLGrammarParser _gclParser = null;
     /** Indica si hubo un error de lexeo */
     private boolean _lexerErrorFound = false;
+    private boolean _parserErrorFound = false;
 
 
     public static void main(String[] args) {
@@ -119,6 +120,10 @@ public class GCL {
         _lexerErrorFound = true;
     }
 
+    public void receiveParserError()
+    {
+        _parserErrorFound = true;
+    }
 
     /**
      * Construye programa principal del lexeador y recibe el input
@@ -140,7 +145,9 @@ public class GCL {
         
         _input = sb.toString();
         sc.close();
+        
         _lexerErrorFound = false;
+        _parserErrorFound = false;
 
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
         _gclLexer.removeErrorListeners(); // quitar por los momentos ya que sino, no funciona en el parser!
@@ -148,6 +155,6 @@ public class GCL {
 
         _gclParser = new GCLGrammarParser(new BufferedTokenStream(_gclLexer));
         _gclParser.removeErrorListeners();
-        _gclParser.addErrorListener(new GCLLexerErrorListener(this)); //HACER OTRO ERROR LISTENER PARA EL PARSER PORQUE ESTE CRASHEA EL PARSER
+        _gclParser.addErrorListener(new GCLParserErrorListener(this)); //HACER OTRO ERROR LISTENER PARA EL PARSER PORQUE ESTE CRASHEA EL PARSER
     } 
 }

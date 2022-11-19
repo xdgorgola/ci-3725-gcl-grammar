@@ -1,4 +1,3 @@
-import com.parsing.GCLGrammarBaseVisitor;
 import com.parsing.GCLGrammarParser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -46,8 +45,12 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitDecl(GCLGrammarParser.DeclContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++);
-        pref.append("DECLARACION: " + ctx.getText());
-        System.out.println(pref);
+        if (ctx.type() != null)
+        {
+            pref = pref.append(ctx.getText());
+            System.out.println(pref);
+        }
+
         visitChildren(ctx);
         
         _currRealDepth--;

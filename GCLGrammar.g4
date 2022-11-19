@@ -64,20 +64,7 @@ printeable     : TkString
 print     : TkPrint printeable;
 
 
-// Declaraciones
-type : TkInt #tInt
-     | TkBool #tBool
-     | TkArray TkOBracket numericLit TkSoForth numericLit TkCBracket #tArray
-     ;
-
-decl : TkId decl TkTwoPoints type 
-     | TkId TkTwoPoints type
-     | TkComma TkId decl
-     | TkComma TkId
-     ;
-
 // Bloques
-
 then : exp TkArrow (inst | seq);
 
 in   : TkId TkIn to;
@@ -98,7 +85,19 @@ doOp : TkDo guard TkOd
      | TkDo then TkOd
      ;
 
+
 // Secuencias
+type : TkInt #tInt
+     | TkBool #tBool
+     | TkArray TkOBracket numericLit TkSoForth numericLit TkCBracket #tArray
+     ;
+
+decl : TkId decl TkTwoPoints type 
+     | TkId TkTwoPoints type 
+     | TkComma TkId decl
+     | TkComma TkId
+     ;
+
 seqDecl   : decl TkSemicolon decl
           | seqDecl TkSemicolon decl 
           ;

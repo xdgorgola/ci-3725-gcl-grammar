@@ -1,26 +1,15 @@
 |[
-    declare 
-        x, y, w, i: int
-    x := 5;
-    y := 6;
-    w := 19;
-    print x;
+    a:= A(2:a)(3:b);
     if 2 <= b /\ b <= 5 /\ true--> print b
     [] y[2] < b /\ b < y[2] --> print a
     [] y[3] >= b \/ b >= y[3] -->
+        a := 10;
         |[
-            declare z: int
+            declare 
+                z : array[2..3]
             print a . b;
-            z := 1;
-            print z
+            z := z(2:a)(3:b);
+            print "array[" . z[2] . ".." . z[3] . "]"
         ]|
-    fi;
-    for j in 2 to 5 -->
-        print j . ":" . " "
-    rof;
-    i := 3
-    //do i < 10 -->
-    //    print "Still here!";
-    //    i := i+1
-    //od
+    fi
 ]|

@@ -8,7 +8,8 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     private int _currRealDepth = 0;
 
     private StringBuilder generatePrefix(int len) {
-        StringBuilder builder = new StringBuilder(Integer.toString(len));
+        //StringBuilder builder = new StringBuilder(Integer.toString(len));
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < len; builder.append('-'), ++i)
             ;
         return builder;
@@ -51,7 +52,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
             System.out.println(pref);
         }
 
-        visitChildren(ctx);
+        //visitChildren(ctx);
         
         _currRealDepth--;
         return null;
@@ -274,7 +275,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitWriteA(GCLGrammarParser.WriteAContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("WriteArray: ");
+        StringBuilder pref = generatePrefix(_currRealDepth++).append("WriteArray");
         System.out.println(pref.toString());
         if (ctx.TkId() != null)
         {
@@ -322,7 +323,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
         System.out.println(pref.toString());
 
         TerminalNode id = ctx.TkId();
-        pref = generatePrefix(_currRealDepth).append(id.getText());
+        pref = generatePrefix(_currRealDepth).append("Ident: ").append(id.getText());
         System.out.println(pref);
 
         visitChildren(ctx);

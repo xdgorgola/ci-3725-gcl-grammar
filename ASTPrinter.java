@@ -49,7 +49,17 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (ctx.type() != null)
         {
             pref = pref.append(ctx.getText());
-            System.out.println(pref);
+            if (ctx.type() instanceof GCLGrammarParser.TArrayContext) {
+                for (int i = 0; i < pref.length(); i++) { 
+                    if (i > 1 && (pref.charAt(i-1) == '[' || (pref.charAt(i-1) == '.' && pref.charAt(i-2) == '.'))) {
+                        System.out.print("Literal: "); 
+                    }
+                    System.out.print(pref.charAt(i)); 
+                }
+                System.out.println("");
+            } else {
+                System.out.println(pref);
+            }
         }
 
         //visitChildren(ctx);

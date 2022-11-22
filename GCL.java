@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 
 import com.parsing.GCLGrammarLexer;
 import com.parsing.GCLGrammarParser;
+import com.parsing.GCLGrammarParser.BlockContext;
 
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.CharStreams;
@@ -40,12 +41,12 @@ public class GCL {
             return;
         }
 
-        translator.getLexerTokens();
+        ASTPrinter visitor = new ASTPrinter(); 
+        BlockContext root = translator._gclParser.block();
         if (translator.getLexerErrorFound())
             return;
 
-        ASTPrinter visitor = new ASTPrinter(); 
-        visitor.visit(translator._gclParser.block());
+        visitor.visit(root);
     }
 
 

@@ -1,6 +1,7 @@
 import java.io.File;
 import java.util.Scanner;
 import java.util.Iterator;
+import java.util.List;
 import java.io.FileNotFoundException;
 
 import com.parsing.GCLGrammarLexer;
@@ -20,7 +21,6 @@ public class GCL {
     private GCLGrammarParser _gclParser = null;
     /** Indica si hubo un error de lexeo */
     private boolean _lexerErrorFound = false;
-    private boolean _parserErrorFound = false;
 
 
     public static void main(String[] args) {
@@ -39,6 +39,10 @@ public class GCL {
             System.out.println("Archivo no tiene formato .gcl");
             return;
         }
+
+        translator.getLexerTokens();
+        if (translator.getLexerErrorFound())
+            return;
 
         ASTPrinter visitor = new ASTPrinter(); 
         visitor.visit(translator._gclParser.block());
@@ -66,6 +70,18 @@ public class GCL {
     }
 
 
+    public List<? extends Token> getLexerTokens()
+    {
+        return _gclLexer.getAllTokens();
+    }
+
+    
+    public boolean getLexerErrorFound()
+    {
+        return _lexerErrorFound;
+    }
+
+    
     /**
      * Printea informacion sobre el proceso de lexeo
      */
@@ -122,7 +138,7 @@ public class GCL {
 
     public void receiveParserError()
     {
-        _parserErrorFound = true;
+        System.exit(0);
     }
 
     /**
@@ -147,7 +163,6 @@ public class GCL {
         sc.close();
         
         _lexerErrorFound = false;
-        _parserErrorFound = false;
 
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
         _gclLexer.removeErrorListeners(); // quitar por los momentos ya que sino, no funciona en el parser!

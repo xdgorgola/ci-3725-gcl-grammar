@@ -167,7 +167,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
                 pref.append("Equal");
                 break;
             case GCLGrammarParser.TkNEqual:
-                pref.append("NEqual");
+                pref.append("NotEqual");
                 break;
         }
 
@@ -311,7 +311,7 @@ public class ASTPrinter extends com.parsing.GCLGrammarBaseVisitor<Void> {
     {
         if (ctx.TkSkip() != null)
         {
-            StringBuilder pref = generatePrefix(_currRealDepth++).append("Skip");
+            StringBuilder pref = generatePrefix(_currRealDepth++).append("skip");
             System.out.println(pref.toString());
             _currRealDepth--;
             return null;

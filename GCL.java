@@ -1,7 +1,6 @@
 import java.io.File;
 import java.util.Scanner;
 import java.util.Iterator;
-import java.util.List;
 import java.io.FileNotFoundException;
 
 import com.parsing.GCLGrammarLexer;
@@ -43,10 +42,14 @@ public class GCL {
 
         ASTPrinter visitor = new ASTPrinter(); 
         BlockContext root = translator._gclParser.block();
-        if (translator.getLexerErrorFound())
-            return;
-
         visitor.visit(root);
+    }
+
+
+    /** Indica que hubo un error de lexer */
+    public void receiveLexerError()
+    {
+        _lexerErrorFound = true;
     }
 
 
@@ -68,18 +71,6 @@ public class GCL {
             throw new FileNotFoundException();
 
         return f;
-    }
-
-
-    public List<? extends Token> getLexerTokens()
-    {
-        return _gclLexer.getAllTokens();
-    }
-
-    
-    public boolean getLexerErrorFound()
-    {
-        return _lexerErrorFound;
     }
 
     
@@ -132,15 +123,6 @@ public class GCL {
         } 
     }
 
-    public void receiveLexerError()
-    {
-        _lexerErrorFound = true;
-    }
-
-    public void receiveParserError()
-    {
-        System.exit(0);
-    }
 
     /**
      * Construye programa principal del lexeador y recibe el input
@@ -165,12 +147,14 @@ public class GCL {
         
         _lexerErrorFound = false;
 
+        GCLParserErrorListener errorListener = new GCLParserErrorListener();
+
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
-        _gclLexer.removeErrorListeners(); // quitar por los momentos ya que sino, no funciona en el parser!
-        _gclLexer.addErrorListener(new GCLLexerErrorListener(this));
+        _gclLexer.removeErrorListeners();
+        _gclLexer.addErrorListener(errorListener);
 
         _gclParser = new GCLGrammarParser(new BufferedTokenStream(_gclLexer));
         _gclParser.removeErrorListeners();
-        _gclParser.addErrorListener(new GCLParserErrorListener(this)); //HACER OTRO ERROR LISTENER PARA EL PARSER PORQUE ESTE CRASHEA EL PARSER
+        _gclParser.addErrorListener(errorListener);
     } 
 }

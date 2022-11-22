@@ -20,11 +20,11 @@ numericLit     : TkMinus numericLit
 
 exp       : TkOpenPar a=exp TkClosePar #parExp
           | op=TkMinus a=exp #unMinExp
-          | op=TkNot a=exp #notExp // pendiente con esto pq deberia permitir solo tktrue o tkfalse segun flavi pero yo no lo creo
           | <assoc=left> a=exp op=TkMult b=exp #multExp
           | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp #minPlusExp
           | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp #ordExp
           | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp #eqExp
+          | op=TkNot a=exp #notExp
           | <assoc=left> a=exp op=TkAnd b=exp #andExp
           | <assoc=left> a=exp op=TkOr b=exp #orExp
           | a=TkId #idExp

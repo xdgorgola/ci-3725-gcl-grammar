@@ -168,33 +168,6 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrint(GCLGrammarParser.PrintContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code tInt}
-	 * labeled alternative in {@link GCLGrammarParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTInt(GCLGrammarParser.TIntContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code tBool}
-	 * labeled alternative in {@link GCLGrammarParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTBool(GCLGrammarParser.TBoolContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code tArray}
-	 * labeled alternative in {@link GCLGrammarParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTArray(GCLGrammarParser.TArrayContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link GCLGrammarParser#decl}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDecl(GCLGrammarParser.DeclContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#then}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -236,6 +209,33 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitDoOp(GCLGrammarParser.DoOpContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code tInt}
+	 * labeled alternative in {@link GCLGrammarParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTInt(GCLGrammarParser.TIntContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code tBool}
+	 * labeled alternative in {@link GCLGrammarParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTBool(GCLGrammarParser.TBoolContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code tArray}
+	 * labeled alternative in {@link GCLGrammarParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTArray(GCLGrammarParser.TArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GCLGrammarParser#decl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDecl(GCLGrammarParser.DeclContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#seqDecl}.
 	 * @param ctx the parse tree

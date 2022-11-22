@@ -1,4 +1,4 @@
-// Array related
+// Operaciones con arreglos
 writeABody -> TkOpenPar exp TkTwoPoints exp TkClosePar
 
 writeA    -> TkId  writeABody
@@ -12,19 +12,25 @@ readA     -> writeA  TkOBracket exp TkCBracket
 numericLit     -> TkMinus numericLit
                | TkNum 
 
-exp       -> TkOpenPar a=exp TkClosePar #parExp
-          | op=TkMinus a=exp #unMinExp
-          | op=TkNot a=exp #notExp 
-          | <assoc=left> a=exp op=TkMult b=exp #multExp
-          | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp #minPlusExp
-          | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp #ordExp
-          | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp #eqExp
-          | <assoc=left> a=exp op=TkAnd b=exp #andExp
-          | <assoc=left> a=exp op=TkOr b=exp #orExp
-          | a=TkId #idExp
-          | a=TkNum #numExp
-          | a=readA #readAExp
-          | a=(TkTrue | TkFalse) #boolExp
+exp       -> TkOpenPar exp TkClosePar 
+          | TkMinus exp 
+          | TkNot exp 
+          | exp TkMult exp 
+          | exp TkPlus exp
+          | exp TkMinus exp 
+          | exp TkGeq exp
+          | exp TkGreater exp
+          | exp TkLeq exp
+          | exp TkLess exp
+          | exp TkEqual exp
+          | exp TkNEqual exp 
+          | exp TkAnd exp 
+          | exp TkOr exp 
+          | TkId 
+          | TkNum 
+          | readA
+          | TkTrue 
+          | TkFalse 
 
 
 // Instrucciones
@@ -52,13 +58,15 @@ print     -> TkPrint printeable
 
 
 // Bloques
-then -> exp TkArrow (inst | seq)
+then -> exp TkArrow inst 
+     | exp TkArrow seq
 
 in   -> TkId TkIn to
 
 to   -> exp TkTo exp
 
-forOp     -> TkFor in TkArrow (inst | seq) TkRof
+forOp     -> TkFor in TkArrow inst TkRof
+          | TkFor in TkArrow seq TkRof
 
 guard     -> then TkGuard then
           | guard TkGuard then
@@ -71,9 +79,9 @@ doOp -> TkDo guard TkOd
 
 
 // Secuencias
-type -> TkInt #tInt
-     | TkBool #tBool
-     | TkArray TkOBracket numericLit TkSoForth numericLit TkCBracket #tArray
+type -> TkInt 
+     | TkBool 
+     | TkArray TkOBracket numericLit TkSoForth numericLit TkCBracket 
 
 decl -> TkId decl TkTwoPoints type 
      | TkId TkTwoPoints type 
@@ -94,8 +102,11 @@ inst -> forOp
 seq  -> inst TkSemicolon inst
      | seq TkSemicolon inst
 
-declarationBlock   -> TkDeclare (decl | seqDecl)
+declarationBlock   -> TkDeclare decl 
+                    | TkDeclare seqDecl
 
 // Símbolo inicial de la gramática
-block     -> TkOBlock declarationBlock (inst | seq) TkCBlock
-          | TkOBlock (inst | seq) TkCBlock
+block     -> TkOBlock declarationBlock inst TkCBlock 
+          | TkOBlock declarationBlock seq TkCBlock
+          | TkOBlock inst TkCBlock 
+          | TkOBlock seq TkCBlock

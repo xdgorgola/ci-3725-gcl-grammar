@@ -1,4 +1,8 @@
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
+
+import java.util.stream.IntStream;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 
@@ -11,7 +15,7 @@ public class GCLParserErrorListener extends BaseErrorListener {
             RecognitionException arg5) {
 
         System.out.format("Syntax error in row in row %s, column %s: Unexpected token: \'%s\'\n", 
-            arg2, arg3 + 1, arg5.getOffendingToken().getText());
+            arg2, arg3 + 1, ((Token)arg1).getText());
             
         translator.receiveParserError();
     }

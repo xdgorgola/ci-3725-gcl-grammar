@@ -1,6 +1,11 @@
 grammar GCLGrammar; 
 import GCLLexer;
 
+@parser::header {
+import java.util.Hashtable;
+import java.util.Stack;
+}
+
 // Array related
 writeABody : TkOpenPar exp TkTwoPoints exp TkClosePar; // pendiente con exp aca!
 
@@ -18,19 +23,20 @@ numericLit     : TkMinus numericLit
                | TkNum // pendiente con esto y los arreglos?
                ; 
 
-exp       : TkOpenPar a=exp TkClosePar #parExp
-          | op=TkMinus a=exp #unMinExp
-          | <assoc=left> a=exp op=TkMult b=exp #multExp
-          | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp #minPlusExp
-          | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp #ordExp
-          | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp #eqExp
-          | op=TkNot a=exp #notExp
-          | <assoc=left> a=exp op=TkAnd b=exp #andExp
-          | <assoc=left> a=exp op=TkOr b=exp #orExp
-          | a=TkId #idExp
-          | a=TkNum #numExp
-          | a=readA #readAExp
-          | a=(TkTrue | TkFalse) #boolExp
+exp  returns [String expType]
+          : TkOpenPar a=exp TkClosePar { $expType = $a.expType; System.out.println($expType); } #parExp
+          | op=TkMinus a=exp { $expType = "int"; } #unMinExp
+          | <assoc=left> a=exp op=TkMult b=exp { $expType = "int"; } #multExp
+          | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp { $expType = "int"; } #minPlusExp
+          | <assoc=left> a=exp op=(TkGeq | TkGreater | TkLeq | TkLess) b=exp { $expType = "bool"; } #ordExp
+          | <assoc=left> a=exp op=(TkEqual | TkNEqual) b=exp { $expType = "bool"; } #eqExp
+          | op=TkNot a=exp { $expType = "bool"; } #notExp
+          | <assoc=left> a=exp op=TkAnd b=exp { $expType = "bool"; } #andExp
+          | <assoc=left> a=exp op=TkOr b=exp { $expType = "bool"; } #orExp
+          | TkId { $expType = null; } #idExp // Se cacha en runtime
+          | a=TkNum { $expType = "int"; } #numExp
+          | a=readA { $expType = "int"; } #readAExp
+          | a=(TkTrue | TkFalse) { $expType = "bool"; } #boolExp
           ;
 
 
@@ -67,7 +73,7 @@ print     : TkPrint printeable;
 // Bloques
 then : exp TkArrow (inst | seq);
 
-in   : TkId TkIn to;
+in   : TkId TkIn to {} ;
 
 to   : exp TkTo exp;
 
@@ -92,14 +98,20 @@ type : TkInt #tInt
      | TkArray TkOBracket numericLit TkSoForth numericLit TkCBracket #tArray
      ;
 
-decl : TkId decl TkTwoPoints type 
-     | TkId TkTwoPoints type 
-     | TkComma TkId decl
-     | TkComma TkId
+
+ldec 
+locals [
+     String gclType = null
+]
+     : TkId TkComma ldec
+     | TkId
      ;
 
+decl : ldec TkTwoPoints type ;
+
+
 seqDecl   : decl TkSemicolon decl
-          | seqDecl TkSemicolon decl 
+          | seqDecl TkSemicolon decl
           ;
 
 inst : forOp
@@ -117,6 +129,13 @@ seq  : inst TkSemicolon inst
 
 declarationBlock   : TkDeclare (decl | seqDecl);
 
-block     : TkOBlock declarationBlock (inst | seq) TkCBlock
+block     
+locals [
+     Hashtable<String, String> symbols
+]
+@init {
+     $symbols = new Hashtable<String, String>();
+}
+          : TkOBlock declarationBlock (inst | seq) TkCBlock
           | TkOBlock (inst | seq) TkCBlock
           ;

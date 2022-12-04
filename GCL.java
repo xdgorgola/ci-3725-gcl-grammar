@@ -40,9 +40,12 @@ public class GCL {
             return;
         }
 
-        ASTPrinter visitor = new ASTPrinter(); 
+        ASTPrinter syntaxVisitor = new ASTPrinter(); 
         BlockContext root = translator._gclParser.block();
-        visitor.visit(root);
+        //syntaxVisitor.visit(root);
+
+        ASTTypeChecker typeVisitor = new ASTTypeChecker(translator._gclParser);
+        typeVisitor.visit(root);
     }
 
 

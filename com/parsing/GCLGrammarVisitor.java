@@ -1,6 +1,11 @@
 package com.parsing;
 // Generated from java-escape by ANTLR 4.11.1
+
+import java.util.Hashtable;
+import java.util.Stack;
+
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
+
 
 /**
  * This interface defines a complete generic visitor for a parse tree produced
@@ -230,6 +235,12 @@ public interface GCLGrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTArray(GCLGrammarParser.TArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GCLGrammarParser#ldec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLdec(GCLGrammarParser.LdecContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GCLGrammarParser#decl}.
 	 * @param ctx the parse tree

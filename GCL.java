@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.BufferedTokenStream;
 
 
+/** Clase principal */
 public class GCL {
 
     /** Input recibido en forma de string */
@@ -40,11 +41,8 @@ public class GCL {
             return;
         }
 
-        ASTPrinter syntaxVisitor = new ASTPrinter(); 
         BlockContext root = translator._gclParser.block();
-        //syntaxVisitor.visit(root);
-
-        ASTTypeChecker typeVisitor = new ASTTypeChecker(translator._gclParser);
+        ASTTypeChecker typeVisitor = new ASTTypeChecker();
         typeVisitor.visit(root);
     }
 

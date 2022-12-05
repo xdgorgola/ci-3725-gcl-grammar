@@ -29,9 +29,4 @@ public class GCLParserErrorListener extends BaseErrorListener {
             
         System.exit(0);  
     }
-    
-    public GCLParserErrorListener()
-    {
-        _errorInLexer = false;
-    }
 }

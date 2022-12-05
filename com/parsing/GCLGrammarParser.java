@@ -627,7 +627,7 @@ public class GCLGrammarParser extends Parser {
 				((ParExpContext)_localctx).a = exp(0);
 				setState(91);
 				match(TkClosePar);
-				 ((ParExpContext)_localctx).expType =  ((ParExpContext)_localctx).a.expType; System.out.println(_localctx.expType); 
+				 ((ParExpContext)_localctx).expType =  ((ParExpContext)_localctx).a.expType; 
 				}
 				break;
 			case 2:

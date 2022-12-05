@@ -6,7 +6,6 @@ import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
-
 /**
  * This interface defines a complete generic visitor for a parse tree produced
  * by {@link GCLGrammarParser}.

@@ -24,7 +24,7 @@ numericLit     : TkMinus numericLit
                ; 
 
 exp  returns [String expType]
-          : TkOpenPar a=exp TkClosePar { $expType = $a.expType; System.out.println($expType); } #parExp
+          : TkOpenPar a=exp TkClosePar { $expType = $a.expType; } #parExp
           | op=TkMinus a=exp { $expType = "int"; } #unMinExp
           | <assoc=left> a=exp op=TkMult b=exp { $expType = "int"; } #multExp
           | <assoc=left> a=exp op=(TkPlus | TkMinus) b=exp { $expType = "int"; } #minPlusExp
@@ -73,7 +73,7 @@ print     : TkPrint printeable;
 // Bloques
 then : exp TkArrow (inst | seq);
 
-in   : TkId TkIn to {} ;
+in   : TkId TkIn to;
 
 to   : exp TkTo exp;
 

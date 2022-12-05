@@ -365,7 +365,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             if (cExp.expType == null)
                 resolveExpIDType(cExp);
 
-            if (!cExp.expType.equals("bool")) {
+            if (!cExp.expType.equals("int")) {
                 Token tok = cExp.start;
                 System.out.println(expectedTypeErrorString("bool", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
                 System.exit(1);

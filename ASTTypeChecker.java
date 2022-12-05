@@ -540,7 +540,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitArrayInit(GCLGrammarParser.ArrayInitContext ctx)
     {
-        return addPrintVisitLeave("Comma | type : array de largo algo.", ctx); // falta esto
+        return addPrintVisitLeave("Comma | type : array with length=algo.", ctx); // falta esto
     }
 
 
@@ -727,12 +727,16 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("To");
         System.out.println(pref.toString());
 
-        for (GCLGrammarParser.ExpContext val : ctx.exp()) {
+        for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // null check aca primero
-            if (val.expType != "int")
-            {
-                System.out.println("ERROR DE TIPO"); // falta mensaje nuevo
-                System.exit(-1);
+            if (cExp.expType == null)
+                resolveExpIDType(cExp);
+
+            if (!cExp.expType.equals("int")) {
+                Token tok = cExp.start; 
+                System.out.println(expectedTypeErrorString("int", cExp.expType, 
+                    tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(1);
             }
         }
         _currRealDepth--;

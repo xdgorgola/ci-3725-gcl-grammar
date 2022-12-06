@@ -7,6 +7,7 @@ import java.util.Stack;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 /** 
  * Clase que se encarga de visitar cada uno de los nodos del arbol sintactico abstracto generado
@@ -251,7 +252,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (!cExp.expType.equals("int")) {
             Token tok = cExp.start;
             System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-            System.exit(1);
+            System.exit(-1);
         }
 
         visitChildren(ctx);
@@ -272,7 +273,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (!cExp.expType.equals("bool")) {
             Token tok = cExp.start;
             System.out.println(expectedTypeErrorString("bool", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-            System.exit(1);
+            System.exit(-1);
         }
         
         visitChildren(ctx);
@@ -304,11 +305,12 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             if (!cExp.expType.equals("int")) {
                 Token tok = cExp.start;
                 System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.exit(-1);
             }
+
+            visit(cExp);
         }
 
-        visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
@@ -329,11 +331,12 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             if (!cExp.expType.equals("int")) {
                 Token tok = cExp.start;
                 System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.exit(-1);
             }
+
+            visit(cExp);
         }
 
-        visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
@@ -367,12 +370,13 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
             if (!cExp.expType.equals("int")) {
                 Token tok = cExp.start;
-                System.out.println(expectedTypeErrorString("bool", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(-1);
             }
+
+            visit(cExp);
         }
 
-        visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
@@ -401,17 +405,19 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
             if (cType == null) {
                 cType = cExp.expType;
+                visit(cExp);
                 continue;
             }
             
             if (!cType.equals(cExp.expType)) {
                 Token tok = cExp.start;
                 System.out.println(expectedTypeErrorString(cType, cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.exit(-1);
             }
+
+            visit(cExp);
         }
 
-        visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
@@ -432,11 +438,12 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             if (!cExp.expType.equals("bool")) {
                 Token tok = cExp.start;
                 System.out.println(expectedTypeErrorString("bool", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.exit(-1);
             }
+
+            visit(cExp);
         }
 
-        visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
@@ -457,11 +464,12 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             if (!cExp.expType.equals("bool")) {
                 Token tok = cExp.start;
                 System.out.println(expectedTypeErrorString("bool", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.exit(-1);
             }
+
+            visit(cExp);
         }
 
-        visitChildren(ctx);
         _currRealDepth--;
         return null;
     }
@@ -580,7 +588,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
                 if (!cExp.expType.equals(idType)) {
                     Token tok = ctx.start;
                     System.out.println(expectedTypeErrorString(idType, cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-                    System.exit(1);
+                    System.exit(-1);
                 }
             }
             else {
@@ -604,20 +612,23 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         System.out.println(pref.toString());
 
         // Extraccion de ID array
-        if (ctx.TkId() != null) {
-            String id = ctx.TkId().toString();
+        TerminalNode idNode = ctx.TkId();
+        if (idNode != null) { // no puede se null XD revisar
+            String id = idNode.toString();
             String idType = lookSymbolType(id);
             if (idType == null) {
-                System.out.println("coso no decalrado");
-                return null;
+                System.out.println("Symbol " + id + " undeclared in row " + idNode.getSymbol().getLine() + 
+                ", column " + idNode.getSymbol().getCharPositionInLine());
+                System.exit(-1);
             }
 
             if (!idType.contains("array")) {
-                System.out.println("error de tipo");
-                return null;
+                Token tok = idNode.getSymbol();
+                System.out.println(expectedTypeErrorString("array", idType, tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(-1);
             }
 
-            pref = generatePrefix(_currRealDepth++).append("Ident: " + id + " | type: int");
+            pref = generatePrefix(_currRealDepth++).append("Ident: " + id + " | type: " + idType);
             System.out.println(pref.toString());
             _currRealDepth--;
         }
@@ -626,7 +637,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (cExp.expType != "int") {
             Token tok = cExp.start;
             System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
-            return null;
+            System.exit(-1);
         }
 
         visitChildren(ctx);
@@ -659,7 +670,24 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitWriteABody(GCLGrammarParser.WriteABodyContext ctx)
     {
-        return addPrintVisitLeave("TwoPoints", ctx);
+        StringBuilder pref = generatePrefix(_currRealDepth++).append("TwoPoints");
+        System.out.println(pref.toString());
+
+        for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
+            if (cExp.expType == null)
+                resolveExpIDType(cExp);
+
+            if (!cExp.expType.equals("int")) {
+                Token tok = cExp.start; 
+                System.out.println(expectedTypeErrorString("int", cExp.expType, 
+                    tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(-1);
+            }
+
+            visit(cExp);
+        }
+        _currRealDepth--;
+        return null;
     }
 
 
@@ -728,7 +756,6 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
-            // null check aca primero
             if (cExp.expType == null)
                 resolveExpIDType(cExp);
 
@@ -736,8 +763,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
                 Token tok = cExp.start; 
                 System.out.println(expectedTypeErrorString("int", cExp.expType, 
                     tok.getLine(), tok.getCharPositionInLine()));
-                System.exit(1);
+                System.exit(-1);
             }
+            visit(cExp);
         }
         _currRealDepth--;
         return null;
@@ -813,10 +841,10 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             resolveExpIDType(cExp);
 
         if (!cExp.expType.equals("bool")) {
-            Token tok = cExp.start; // esto aca es el token actual del then, no el token de la expresion hija.
+            Token tok = cExp.start;
             System.out.println(expectedTypeErrorString("bool", cExp.expType, 
                 tok.getLine(), tok.getCharPositionInLine()));
-            System.exit(1);
+            System.exit(-1);
         }
         return null;
     }

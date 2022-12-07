@@ -20,7 +20,7 @@ readA     : writeA  TkOBracket exp TkCBracket
 
 // Expresiones
 numericLit     : TkMinus numericLit
-               | TkNum // pendiente con esto y los arreglos?
+               | TkNum
                ; 
 
 exp  returns [String expType]

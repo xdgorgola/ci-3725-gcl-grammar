@@ -1,26 +1,10 @@
 |[
    declare
       x, y, z : int;
-      A, B, C : array[0..4];
+      A, B, C : array[1..4];
+      Z : array[-1..2];
+      Y : array[1..10];
       t, f, p : bool
 
-   B := 1, 2;
-   A := A(x+5:20);
-   x := C[10];
-   for i in 10 to 20 -->
-      for j in 20 to 30 -->
-         for k in 30 to 40 -->
-            |[
-               declare
-                  abc : int
-               |[
-                  for m in 10 to 40 -->
-                     skip
-                  rof;
-                  x := i + abc * true
-               ]|
-            ]|
-         rof
-      rof
-   rof
+      B := Z(1:2)(3:4)
 ]|

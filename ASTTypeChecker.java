@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Stack;
 
+import org.abego.treelayout.internal.util.java.lang.string.StringUtil;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -130,6 +131,18 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         current.expType = t;
+    }
+
+
+    private int calculateSymbolArrayLen(String id) {
+        int len = 0;
+        String typeStr = lookSymbolType(id);
+        Pattern p = Pattern.compile("-*[0-9]+");
+        Matcher match = p.matcher(typeStr);
+        while (match.find())
+            len = Integer.parseInt(match.group()) - len;
+        
+        return len + 1;
     }
 
 
@@ -499,6 +512,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
                 System.exit(-1);
         }
 
+        ctx.expType = idType;
         pref = pref.append("Ident: " + id + " | type: " + idType);
         System.out.println(pref.toString());
 
@@ -534,7 +548,10 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitReadAExp(GCLGrammarParser.ReadAExpContext ctx)
     {
-        visitChildren(ctx); // falta esto
+        //StringBuilder pref = generatePrefix(_currRealDepth++);
+        //pref = pref.append("ReadArray | type: int");
+
+        visitChildren(ctx);
         return null;
     }
 
@@ -542,15 +559,38 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitAsignable(GCLGrammarParser.AsignableContext ctx)
     {
-        visitChildren(ctx); // se encargan los hijos de adentro
+        visitChildren(ctx);
         return null;
     }
     
 
-    //@Override
     public Void visitArrayInitLen(GCLGrammarParser.ArrayInitContext ctx, int len)
     {
-        return addPrintVisitLeave("Comma | type : array with length= " + len, ctx); // falta esto
+        StringBuilder pref = generatePrefix(_currRealDepth++);
+        GCLGrammarParser.ExpContext cExp;
+
+        pref.append("Comma | type : array with length= " + len);
+        System.out.println(pref.toString());
+
+        if (ctx.arrayInit() != null)
+            visitArrayInitLen(ctx.arrayInit(), len);
+
+        for (GCLGrammarParser.AsignableContext cAsig : ctx.asignable()) {
+            cExp = cAsig.exp();
+            if (cExp.expType == null)
+                resolveExpIDType(cExp);
+
+            if (!cExp.expType.equals("int")) {
+                Token tok = cExp.start;
+                System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(-1);
+            }
+
+            visit(cAsig);
+        }
+
+        _currRealDepth--;
+        return null;
     }
 
 
@@ -579,35 +619,80 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         pref = pref.append("Ident: " + id + " | type: " + idType);
         System.out.println(pref);
 
-        // puede ser dos cosas: asignable  = exp | writeA o arrayInit. si es array init hay que chequear largos de arreglos.
-        // si es writeA hay que chequear de forma similar si los slices resultantes tienen largos iguales. y si el simbolo esta en for?
         GCLGrammarParser.AsignableContext asignable = ctx.asignable();
         if (asignable != null) {
-
             GCLGrammarParser.ExpContext cExp = ctx.asignable().exp();
+            
             if (cExp != null) {
                 if (cExp.expType == null)
-                    resolveExpIDType(cExp); // resuelve para for tambien!
+                    resolveExpIDType(cExp);
 
                 if (!cExp.expType.equals(idType)) {
                     Token tok = ctx.start;
                     System.out.println(expectedTypeErrorString(idType, cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
                     System.exit(-1);
                 }
+
+                visit(asignable);
+                return null;
             }
-            else if (!idType.equals("array")) { // chequear largos de array!!!!
-                // es writeA, extraer id y tipo
+
+            if (!idType.contains("array")) {
+                Token tok = ctx.start;
+                System.out.println(expectedTypeErrorString(idType, "array", tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(-1);
             }
+            
+            String wAID;
+            GCLGrammarParser.WriteAContext cur = asignable.writeA();
+            while (cur != null) {
+                if (cur.TkId() != null) {
+                    break;
+                }
+                cur = cur.writeA();
+            }
+
+            wAID = cur.TkId().getText();
+            String wType = lookSymbolType(wAID);
+            Token wTok = cur.TkId().getSymbol();
+
+            if (wType == null) {
+                if (isSymbolInForStack(wAID)) {
+                    expectedTypeErrorString("array", "int", wTok.getLine(), wTok.getCharPositionInLine());
+                    System.exit(-1);
+                }
+
+                System.out.println("Symbol " + wAID + " undeclared in row " + wTok.getLine() + 
+                ", column " + wTok.getCharPositionInLine());
+                System.exit(-1);
+            }
+
+            if (!wType.contains("array")) {
+                System.out.println(expectedTypeErrorString("array", wType, wTok.getLine(), wTok.getCharPositionInLine()));
+                System.exit(-1);
+            }
+
+            int aLen = calculateSymbolArrayLen(id);
+            int wLen = calculateSymbolArrayLen(wAID);
+            if (aLen != wLen) {
+                System.out.println("Wrong array assignation length at row "+ asignable.start.getLine() + 
+                ". Received " + wLen + " elements but array length is " + aLen);
+                System.exit(-1);
+            }
+
             visit(asignable);
             return null;
         }
 
-        Pattern p = Pattern.compile("-*[0-9]+");
-        Matcher match = p.matcher(idType);
-        int len = 0;
-        while (match.find()) {
-            len = Integer.parseInt(match.group()) - len;
+        int len = calculateSymbolArrayLen(id);
+        GCLGrammarParser.ArrayInitContext initCtx = ctx.arrayInit();
+        int commaCount = (int)initCtx.getText().chars().filter(c -> c == ',').count();
+        if (commaCount + 1 != len) {
+            System.out.println("Wrong array initialization length at row "+ initCtx.start.getLine() + 
+                ". Received " + (commaCount +1) + " elements but array length is " + len);
+            System.exit(-1);
         }
+
         visitArrayInitLen(ctx.arrayInit(), len);
 
         _currRealDepth--;
@@ -623,7 +708,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         // Extraccion de ID array
         TerminalNode idNode = ctx.TkId();
-        if (idNode != null) { // no puede se null XD revisar
+        if (idNode != null) {
             String id = idNode.toString();
             String idType = lookSymbolType(id);
             if (idType == null) {
@@ -644,7 +729,10 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         ExpContext cExp = ctx.exp();
-        if (cExp.expType != "int") {
+        if (cExp.expType == null)
+            resolveExpIDType(cExp);
+
+        if (!cExp.expType.equals("int")) {
             Token tok = cExp.start;
             System.out.println(expectedTypeErrorString("int", cExp.expType, tok.getLine(), tok.getCharPositionInLine()));
             System.exit(-1);
@@ -664,9 +752,30 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         System.out.println(pref.toString());
 
         // Extraccion de ID array
-        if (ctx.TkId() != null)
+        TerminalNode idNode = ctx.TkId();
+        if (idNode != null)
         {
+            String id = idNode.getText();
+            String idType = lookSymbolType(id);
+            Token idTok = idNode.getSymbol();
+            if (idType == null) {
+                if (isSymbolInForStack(id)) {
+                    expectedTypeErrorString("array", "int", idTok.getLine(), idTok.getCharPositionInLine());
+                    System.exit(-1);
+                }
+
+                System.out.println("Symbol " + id + " undeclared in row " + idTok.getLine() + 
+                ", column " + idTok.getCharPositionInLine());
+                System.exit(-1);
+            }
+
+            if (!idType.contains("array")) {
+                expectedTypeErrorString("array", "int", idTok.getLine(), idTok.getCharPositionInLine());
+                System.exit(-1);
+            }
+
             pref = generatePrefix(_currRealDepth++).append("Ident: " + ctx.TkId().toString());
+            pref = pref.append(" | type: " + idType);
             System.out.println(pref.toString());
             _currRealDepth--;
         }
@@ -788,6 +897,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (ctx.TkString() != null)
         {
             StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
+            pref = pref.append(" | type : string");
+            
             System.out.println(pref.toString());
             _currRealDepth--;
             return null;
@@ -811,6 +922,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (ctx.TkString() != null)
         {
             StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
+            pref = pref.append(" | type : string");
             System.out.println(pref.toString());
             _currRealDepth--;
             return null;

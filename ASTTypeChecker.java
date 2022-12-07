@@ -595,8 +595,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
                     System.exit(-1);
                 }
             }
-            else {
-                // es un writeA chequeo tipos
+            else if (!idType.equals("array")) { // chequear largos de array!!!!
+                // es writeA, extraer id y tipo
             }
             visit(asignable);
             return null;

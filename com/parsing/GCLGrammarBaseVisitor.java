@@ -1,9 +1,6 @@
 package com.parsing;
 // Generated from java-escape by ANTLR 4.11.1
 
-import java.util.Hashtable;
-import java.util.Stack;
-
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**

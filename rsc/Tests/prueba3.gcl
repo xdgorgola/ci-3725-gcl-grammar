@@ -3,8 +3,11 @@
       x, y, z : int;
       A, B, C : array[0..4];
       t, f, p : bool
-    
-   for i in 1 to 10 -->
+
+   B := 1, 2;
+   A := A(x+5:20);
+   x := C[10];
+   for i in 10 to 20 -->
       for j in 20 to 30 -->
          for k in 30 to 40 -->
             |[

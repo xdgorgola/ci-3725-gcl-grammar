@@ -1,6 +1,8 @@
 import com.parsing.GCLGrammarParser.ExpContext;
 import com.parsing.GCLGrammarParser;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Stack;
@@ -545,10 +547,10 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     }
     
 
-    @Override
-    public Void visitArrayInit(GCLGrammarParser.ArrayInitContext ctx)
+    //@Override
+    public Void visitArrayInitLen(GCLGrammarParser.ArrayInitContext ctx, int len)
     {
-        return addPrintVisitLeave("Comma | type : array with length=algo.", ctx); // falta esto
+        return addPrintVisitLeave("Comma | type : array with length= " + len, ctx); // falta esto
     }
 
 
@@ -579,9 +581,11 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         // puede ser dos cosas: asignable  = exp | writeA o arrayInit. si es array init hay que chequear largos de arreglos.
         // si es writeA hay que chequear de forma similar si los slices resultantes tienen largos iguales. y si el simbolo esta en for?
-        if (ctx.asignable() != null) {
-            if (ctx.asignable().exp() != null) {
-                GCLGrammarParser.ExpContext cExp = ctx.asignable().exp();
+        GCLGrammarParser.AsignableContext asignable = ctx.asignable();
+        if (asignable != null) {
+
+            GCLGrammarParser.ExpContext cExp = ctx.asignable().exp();
+            if (cExp != null) {
                 if (cExp.expType == null)
                     resolveExpIDType(cExp); // resuelve para for tambien!
 
@@ -594,11 +598,17 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             else {
                 // es un writeA chequeo tipos
             }
+            visit(asignable);
+            return null;
         }
-        else {
-            // es un arrayInit chequeo tipos
+
+        Pattern p = Pattern.compile("-*[0-9]+");
+        Matcher match = p.matcher(idType);
+        int len = 0;
+        while (match.find()) {
+            len = Integer.parseInt(match.group()) - len;
         }
-        visitChildren(ctx);
+        visitArrayInitLen(ctx.arrayInit(), len);
 
         _currRealDepth--;
         return null;

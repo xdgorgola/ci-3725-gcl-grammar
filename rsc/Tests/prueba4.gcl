@@ -1,7 +1,7 @@
 |[
   declare
     i, max : int;
-    a : array[1..4];
+    a : array[4..-4];
     b : array[2..5];
     a : int
   max := b(3+1:2)[1+1]

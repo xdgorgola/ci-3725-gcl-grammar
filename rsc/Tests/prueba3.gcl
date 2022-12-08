@@ -1,18 +1,9 @@
 |[
    declare
       x, y, p : int;
-      z : array[2..3];
+      z : array[-3..-1];
       c : array[1..3];
       t, f, k : bool
-   x := 1;
-   for m in c(1:2)(2:2)[3] to x + x + x + c(1:2)[2] -->
-      |[
-         declare
-            x, y : bool;
-            z : array[0..3];
-            c : array[-1..3];
-            t, f, m : int
-         skip
-      ]|
-   rof
+   
+   z := z(2--2:-1)
 ]|

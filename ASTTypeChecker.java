@@ -259,6 +259,23 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     @Override
     public Void visitDecl(GCLGrammarParser.DeclContext ctx)
     {
+        String gclType = ctx.type().getText();
+        if (gclType.contains("array")) {
+            Pattern p = Pattern.compile("-*[0-9]+");
+            Matcher match = p.matcher(gclType);
+
+            match.find();
+            int a = Integer.parseInt(match.group());
+            match.find();
+            int b = Integer.parseInt(match.group());
+
+            if (b <= a) {
+                Token tok = ctx.type().start;
+                System.out.println("Wrong array declaration on row " + tok.getLine() + " , col " + 
+                    tok.getCharPositionInLine() + ".Negative or zero.");
+                System.exit(-1);
+            }
+        }
         visitLdec(ctx.ldec(), ctx.type().getText());
         return null;
     }
@@ -283,6 +300,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         pref.append("Minus | type : int");
+        System.err.println(pref.toString());
+
         GCLGrammarParser.ExpContext cExp = ctx.exp();
         // Chequeo de tipo y null
         if (cExp.expType == null)
@@ -305,6 +324,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         pref.append("Not | type : bool");
+        System.out.println(pref.toString());
+        
         GCLGrammarParser.ExpContext cExp = ctx.exp();
         // Chequeo de tipo y null
         if (cExp.expType == null)

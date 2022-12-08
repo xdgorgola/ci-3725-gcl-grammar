@@ -5,9 +5,8 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Stack;
+import java.util.ArrayDeque;
 
-import org.abego.treelayout.internal.util.java.lang.string.StringUtil;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -19,8 +18,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     
     // Tablas de simbolos
-    private Stack<Hashtable<String, String>> _symbolStack = new Stack<Hashtable<String, String>>();
-    private Stack<String> _forStack = new Stack<String>();
+    private ArrayDeque<Hashtable<String, String>> _symbolStack = new ArrayDeque<Hashtable<String, String>>();
+    private ArrayDeque<String> _forStack = new ArrayDeque<String>();
 
     /** Profundidad actual del arbol */
     private int _currRealDepth = 0;
@@ -52,6 +51,16 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         return false;
+    }
+
+
+    /**
+     * Revisa si un simbolo se encuentra en las tablas de simbolos.
+     * @param symbol Simbolo a buscar
+     * @return true si esta en alguna tabla. false en caso contrario.
+     */
+    public boolean isSymbolInLastTable(String symbol) {
+        return _symbolStack.peek().containsKey(symbol);
     }
 
 
@@ -207,7 +216,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder lvl = generatePrefix(_currRealDepth);
         String id = ctx.TkId().getText();
         Token idTok = ctx.TkId().getSymbol();
-        if (isSymbolInTables(id))
+        if (isSymbolInLastTable(id))
         {
             System.out.println("Symbol " + id + " redeclaration in row " + idTok.getLine() + 
                 ", column " + idTok.getCharPositionInLine());
@@ -217,7 +226,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (isSymbolInForStack(id))
         {
             System.out.println("Error in row " + idTok.getLine() + ", column " + idTok.getCharPositionInLine() + 
-            ": It is changing the variable \"" + id + "\", which is a control variable of a 'for' statement");
+            ": It is redeclaring the variable \"" + id + "\", which is a control variable of a 'for' statement");
             System.exit(-1);
         }
 
@@ -569,7 +578,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         GCLGrammarParser.ExpContext cExp;
 
-        pref.append("Comma | type : array with length= " + len);
+        pref.append("Comma | type: array with length=" + len);
         System.out.println(pref.toString());
 
         if (ctx.arrayInit() != null)
@@ -634,6 +643,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
                 }
 
                 visit(asignable);
+                _currRealDepth--;
                 return null;
             }
 
@@ -658,7 +668,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
             if (wType == null) {
                 if (isSymbolInForStack(wAID)) {
-                    expectedTypeErrorString("array", "int", wTok.getLine(), wTok.getCharPositionInLine());
+                    expectedTypeErrorString(idType, "int", wTok.getLine(), wTok.getCharPositionInLine());
                     System.exit(-1);
                 }
 
@@ -667,25 +677,24 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
                 System.exit(-1);
             }
 
-            if (!wType.contains("array")) {
-                System.out.println(expectedTypeErrorString("array", wType, wTok.getLine(), wTok.getCharPositionInLine()));
-                System.exit(-1);
-            }
-
-            int aLen = calculateSymbolArrayLen(id);
-            int wLen = calculateSymbolArrayLen(wAID);
-            if (aLen != wLen) {
-                System.out.println("Wrong array assignation length at row "+ asignable.start.getLine() + 
-                ". Received " + wLen + " elements but array length is " + aLen);
+            if (!wType.equals(idType)) {
+                System.out.println(expectedTypeErrorString(idType, wType, wTok.getLine(), wTok.getCharPositionInLine()));
                 System.exit(-1);
             }
 
             visit(asignable);
+            _currRealDepth--;
             return null;
         }
 
-        int len = calculateSymbolArrayLen(id);
         GCLGrammarParser.ArrayInitContext initCtx = ctx.arrayInit();
+        if (!idType.contains("array")) {
+            Token tok = initCtx.getStart();
+            System.out.println(expectedTypeErrorString(idType, "array", tok.getLine(), tok.getCharPositionInLine()));
+            System.exit(-1);
+        }
+        
+        int len = calculateSymbolArrayLen(id);
         int commaCount = (int)initCtx.getText().chars().filter(c -> c == ',').count();
         if (commaCount + 1 != len) {
             System.out.println("Wrong array initialization length at row "+ initCtx.start.getLine() + 

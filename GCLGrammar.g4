@@ -3,7 +3,7 @@ import GCLLexer;
 
 @parser::header {
 import java.util.Hashtable;
-import java.util.Stack;
+import java.util.ArrayDeque;
 }
 
 // Array related

@@ -1,19 +1,10 @@
 |[
   declare
     i, max : int;
-    itIs : bool;
-    a, b : int;
-    A : array[0..5]
+    a : array[1..4];
+    b : array[2..5];
+    a : int
+  max := b(3+1:2)[1+1]
 
-    b := A(2:3)[A(i:a)(b:b)[10]];
-    A := 1, 2, 3, 4, 5;
-    A := A(4:3)(2:5)(0:10)(2:7)(8:6);
-    i := A(5:5);
-    itIs := false;
-    i := 0;
-    do i <= 5 /\ !itIs -->
-       itIs := true == false;
-       i := i+1
-    od
-    // Esto es un comentario. Debe ser ignorado.
+
 ]| 

@@ -22,6 +22,7 @@ public class GCL {
     private GCLGrammarParser _gclParser = null;
     /** Indica si hubo un error de lexeo */
     private boolean _lexerErrorFound = false;
+    private GCLParserErrorListener _errorListener = null;
 
 
     public static void main(String[] args) {
@@ -42,17 +43,13 @@ public class GCL {
         }
 
         BlockContext root = translator._gclParser.block();
+        if (translator._errorListener._errorInLexer)
+            return;
+
         ASTTypeChecker typeVisitor = new ASTTypeChecker();
         typeVisitor.visit(root);
     }
-
-
-    /** Indica que hubo un error de lexer */
-    public void receiveLexerError()
-    {
-        _lexerErrorFound = true;
-    }
-
+    
 
     /**
      * Abre un archivo y chequea si es de formato .gcl
@@ -148,14 +145,14 @@ public class GCL {
         
         _lexerErrorFound = false;
 
-        GCLParserErrorListener errorListener = new GCLParserErrorListener();
+        _errorListener = new GCLParserErrorListener();
 
         _gclLexer = new GCLGrammarLexer(CharStreams.fromString(_input));
         _gclLexer.removeErrorListeners();
-        _gclLexer.addErrorListener(errorListener);
+        _gclLexer.addErrorListener(_errorListener);
 
         _gclParser = new GCLGrammarParser(new BufferedTokenStream(_gclLexer));
         _gclParser.removeErrorListeners();
-        _gclParser.addErrorListener(errorListener);
+        _gclParser.addErrorListener(_errorListener);
     } 
 }

@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.RecognitionException;
 /** Error listener del parser completo */
 public class GCLParserErrorListener extends BaseErrorListener {
     
-    private boolean _errorInLexer = false;
+    public boolean _errorInLexer = false;
 
     @Override
     public void syntaxError(Recognizer<?, ?> arg0, Object arg1, int arg2, int arg3, String arg4,
@@ -22,7 +22,7 @@ public class GCLParserErrorListener extends BaseErrorListener {
         }
 
         if (_errorInLexer)
-            System.exit(0);
+            System.exit(-1);
 
         System.out.format("Syntax error in row in row %s, column %s: Unexpected token: \'%s\'\n", 
             arg2, arg3 + 1, ((Token)arg1).getText());          

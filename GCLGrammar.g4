@@ -2,8 +2,9 @@ grammar GCLGrammar;
 import GCLLexer;
 
 @parser::header {
-import java.util.Hashtable;
+package com.parsing;
 import java.util.ArrayDeque;
+import com.parsing.utils.SymbolsTable;
 }
 
 // Array related
@@ -131,10 +132,10 @@ declarationBlock   : TkDeclare (decl | seqDecl);
 
 block     
 locals [
-     Hashtable<String, String> symbols
+     SymbolsTable symbols
 ]
 @init {
-     $symbols = new Hashtable<String, String>();
+     $symbols = new SymbolsTable();
 }
           : TkOBlock declarationBlock (inst | seq) TkCBlock
           | TkOBlock (inst | seq) TkCBlock

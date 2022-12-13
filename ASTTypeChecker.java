@@ -1,9 +1,9 @@
 import com.parsing.GCLGrammarParser.ExpContext;
+import com.parsing.utils.SymbolsTable;
 import com.parsing.GCLGrammarParser;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.ArrayDeque;
 
@@ -18,7 +18,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     
     // Tablas de simbolos
-    private ArrayDeque<Hashtable<String, String>> _symbolStack = new ArrayDeque<Hashtable<String, String>>();
+    private ArrayDeque<SymbolsTable> _symbolStack = new ArrayDeque<SymbolsTable>();
     private ArrayDeque<String> _forStack = new ArrayDeque<String>();
 
     /** Profundidad actual del arbol */
@@ -43,10 +43,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
      * @return true si esta en alguna tabla. false en caso contrario.
      */
     public boolean isSymbolInTables(String symbol) {
-        Iterator<Hashtable<String, String>> tablesIT = _symbolStack.iterator();
-        while (tablesIT.hasNext())
-        {
-            if (tablesIT.next().containsKey(symbol))
+        SymbolsTable cur = _symbolStack.peek();
+        for(;cur != null; cur = cur.getPreviousTable()) {
+            if (cur.isSymbolInTable(symbol))
                 return true;
         }
 
@@ -60,7 +59,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
      * @return true si esta en la ultima tabla. false en caso contrario.
      */
     public boolean isSymbolInLastTable(String symbol) {
-        return _symbolStack.peek().containsKey(symbol);
+        return _symbolStack.peek().isSymbolInTable(symbol);
     }
 
 
@@ -88,12 +87,10 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
      * @return Tipo del simbolo
      */
     public String lookSymbolType(String ident) {
-        Iterator<Hashtable<String, String>> tablesIT = _symbolStack.iterator();
-        while (tablesIT.hasNext())
-        {
-            Hashtable<String, String> table = tablesIT.next();
-            if (table.containsKey(ident))
-                return table.get(ident);
+        SymbolsTable cur = _symbolStack.peek();
+        for(;cur != null; cur = cur.getPreviousTable()) {
+            if (cur.isSymbolInTable(ident))
+                return cur.getSymbolType(ident);
         }
 
         return (isSymbolInForStack(ident) ? "int" : null);
@@ -107,7 +104,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
      */
     public void addToTopSymbols(String id, String gclType) 
     {
-        _symbolStack.peek().put(id, gclType);
+        _symbolStack.peek().addSymbol(id, gclType);
     }
     
 
@@ -194,6 +191,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
     @Override
     public Void visitBlock(GCLGrammarParser.BlockContext ctx) {
+        ctx.symbols.setPreviousTable(_symbolStack.peek());
         _symbolStack.push(ctx.symbols);
         addPrintVisitLeave("Block", ctx);
         _symbolStack.pop();

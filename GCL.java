@@ -42,10 +42,12 @@ public class GCL {
             return;
         }
 
+        ASTConverter conv = new ASTConverter();
+        System.out.println(conv.numberToCode(1));
         BlockContext root = translator._gclParser.block();
         if (translator._errorListener._errorInLexer)
             return;
-
+        
         ASTTypeChecker typeVisitor = new ASTTypeChecker();
         typeVisitor.visit(root);
     }

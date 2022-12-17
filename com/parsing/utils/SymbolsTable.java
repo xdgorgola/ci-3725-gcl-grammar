@@ -1,11 +1,28 @@
 package com.parsing.utils;
 
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 public class SymbolsTable {
     
     private SymbolsTable _previousTable = null;
     private LinkedHashMap<String, String> _symbolTable = null;
+
+    public Iterator<Entry<String, String>> getListValueIterator(int offset) {
+        return _symbolTable.entrySet().iterator();
+    }
+
+
+    public String[] getValues() {
+        return _symbolTable.values().toArray(new String[size()]);
+    }
+
+
+    public Integer size() {
+        return _symbolTable.size();
+    }
+
 
     public void setPreviousTable(SymbolsTable v) {
         _previousTable = v;

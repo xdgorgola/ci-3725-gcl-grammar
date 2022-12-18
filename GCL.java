@@ -47,7 +47,7 @@ public class GCL {
         if (translator._errorListener._errorInLexer)
             return;
         
-        ASTTypeChecker typeVisitor = new ASTTypeChecker();
+        ASTTypeChecker typeVisitor = new ASTTypeChecker(false);
         typeVisitor.visit(root);
         conv.visit(root);
     }

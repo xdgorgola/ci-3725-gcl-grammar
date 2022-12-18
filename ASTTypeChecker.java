@@ -23,6 +23,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
     /** Profundidad actual del arbol */
     private int _currRealDepth = 0;
+    private boolean _print = false;
 
     /**
      * Genera un stringbuilder con prefijo -
@@ -181,7 +182,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     private Void addPrintVisitLeave(String txt, ParserRuleContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append(txt);
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         visitChildren(ctx);
         _currRealDepth--;
@@ -244,7 +247,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         addToTopSymbols(id, gclType);
         lvl.append("variable: " + id + " | type: " + gclType);
-        System.out.println(lvl.toString());
+
+        if(_print)
+            System.out.println(lvl.toString());
 
         GCLGrammarParser.LdecContext c = ctx.ldec();
         if (c != null)
@@ -322,7 +327,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         pref.append("Not | type : bool");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
         
         GCLGrammarParser.ExpContext cExp = ctx.exp();
         // Chequeo de tipo y null
@@ -355,7 +362,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         pref.append(" | type: int");
-        System.out.println(pref.toString());
+        
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -382,7 +391,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++);
 
         pref.append("Mult | type : int");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -423,7 +434,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         pref.append(" | type: bool");
-        System.out.println(pref.toString());
+        
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -458,7 +471,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         pref.append(" | type: bool");
-        System.out.println(pref.toString());
+        
+        if(_print)
+            System.out.println(pref.toString());
 
         String cType = null;
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
@@ -492,7 +507,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++);
 
         pref.append("And | type : bool");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -519,7 +536,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++);
 
         pref.append("Or | type : bool");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -566,7 +585,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         ctx.expType = idType;
         pref = pref.append("Ident: " + id + " | type: " + idType);
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         _currRealDepth--;
         return null;
@@ -579,7 +600,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         pref = pref.append("Literal: " + ctx.getText() + " | type: " + "int");
     
-        System.out.println(pref.toString());
+        if(_print)
+            System.out.println(pref.toString());
         _currRealDepth--;
         return null;
     }
@@ -591,7 +613,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         pref = pref.append("Literal: " + ctx.getText() + " | type: bool");
     
-        System.out.println(pref.toString());
+        if(_print)
+            System.out.println(pref.toString());
         _currRealDepth--;
         return null;
     }
@@ -625,7 +648,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         GCLGrammarParser.ExpContext cExp;
 
         pref.append("Comma | type: array with length=" + len);
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         // Si aun no estamos en el final, profundicemos
         if (ctx.arrayInit() != null)
@@ -633,6 +658,12 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         for (GCLGrammarParser.AsignableContext cAsig : ctx.asignable()) {
             cExp = cAsig.exp();
+            if (cExp == null) {
+                Token tok = cAsig.writeA().start;
+                System.out.println(expectedTypeErrorString("int", "array", tok.getLine(), tok.getCharPositionInLine()));
+                System.exit(-1);
+            }
+
             // Chequeo de tipo y null
             if (cExp.expType == null)
                 resolveExpIDType(cExp);
@@ -655,7 +686,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitAsignation(GCLGrammarParser.AsignationContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("Asig");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         pref = generatePrefix(_currRealDepth);
         Token idTok = ctx.TkId().getSymbol();
@@ -677,7 +710,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         }
 
         pref = pref.append("Ident: " + id + " | type: " + idType);
-        System.out.println(pref);
+
+        if(_print)
+            System.out.println(pref);
 
         GCLGrammarParser.AsignableContext asignable = ctx.asignable();
         if (asignable != null) {
@@ -775,7 +810,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitReadA(GCLGrammarParser.ReadAContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("ReadArray | type: int");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         // Extraccion de ID array
         TerminalNode idNode = ctx.TkId();
@@ -797,7 +834,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             }
 
             pref = generatePrefix(_currRealDepth++).append("Ident: " + id + " | type: " + idType);
-            System.out.println(pref.toString());
+
+            if(_print)
+                System.out.println(pref.toString());
             _currRealDepth--;
         }
 
@@ -823,7 +862,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitWriteA(GCLGrammarParser.WriteAContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("WriteArray");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         // Extraccion de ID array
         TerminalNode idNode = ctx.TkId();
@@ -854,7 +895,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
             pref = generatePrefix(_currRealDepth++).append("Ident: " + ctx.TkId().toString());
             pref = pref.append(" | type: " + idType);
-            System.out.println(pref.toString());
+
+            if(_print)
+                System.out.println(pref.toString());
             _currRealDepth--;
         }
 
@@ -868,7 +911,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitWriteABody(GCLGrammarParser.WriteABodyContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("TwoPoints");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -896,7 +941,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         if (ctx.TkSkip() != null)
         {
             StringBuilder pref = generatePrefix(_currRealDepth++).append("skip");
-            System.out.println(pref.toString());
+
+            if(_print)
+                System.out.println(pref.toString());
             _currRealDepth--;
             return null;
         }
@@ -919,7 +966,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitIn(GCLGrammarParser.InContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("In");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         String id = ctx.TkId().getText();
         Token idTok = ctx.TkId().getSymbol();
@@ -941,7 +990,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
         _forStack.push(id);
         pref = generatePrefix(_currRealDepth).append("Ident: " + id + " | type: int");
-        System.out.println(pref);
+
+        if(_print)
+            System.out.println(pref);
 
         visitChildren(ctx);
         _currRealDepth--;
@@ -953,7 +1004,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitTo(GCLGrammarParser.ToContext ctx)
     {
         StringBuilder pref = generatePrefix(_currRealDepth++).append("To");
-        System.out.println(pref.toString());
+
+        if(_print)
+            System.out.println(pref.toString());
 
         for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
             // Chequeo de tipo y null
@@ -981,7 +1034,8 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
             StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
             pref = pref.append(" | type : string");
             
-            System.out.println(pref.toString());
+            if(_print)
+                System.out.println(pref.toString());
             _currRealDepth--;
             return null;
         }
@@ -1005,7 +1059,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
         {
             StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
             pref = pref.append(" | type : string");
-            System.out.println(pref.toString());
+
+            if(_print)
+                System.out.println(pref.toString());
             _currRealDepth--;
             return null;
         }
@@ -1060,5 +1116,10 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     public Void visitDoOp(GCLGrammarParser.DoOpContext ctx)
     {
         return addPrintVisitLeave("Do", ctx);
+    }
+
+
+    public ASTTypeChecker(boolean print) {
+        _print = print;
     }
 }

@@ -20,15 +20,19 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  */
 public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     
+    private static final String BOOL_EQ_STR_CODE = "c_{1}";
     private static final String OR_STR_CODE = "c_{4}";
     private static final String AND_STR_CODE = "c_{5}";
+    private static final String BOOL_NEQ_STR_CODE = "c_{6}";
     private static final String NOT_STR_CODE = "c_{7}";
     private static final String TRUE_STR_CODE = "c_{8}";
     private static final String FALSE_STR_CODE = "c_{9}";
     private static final String EXIST_OCON_STR_CODE = "c_{13}";
     private static final String INT_EQ_STR_CODE = "c_{15}";
     private static final String SET_COMP_STR_CODE = "c_{19}";
+    private static final String CURLY_STR_CODE = "c_{20}";
     private static final String COMMA_STR_CODE = "c_{21}";
+    private static final String SMALL_UNION_STR_CODE = "c_{24}";
     private static final String PAR_ORD_STR_CODE = "c_{31}";
     private static final String CROSS_STR_CODE = "c_{32}";
     private static final String TUPL_STR_CODE = "c_{33}";
@@ -41,8 +45,15 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private static final String SUM_STR_CODE = "c_{55}";
     private static final String SUB_STR_CODE = "c_{56}";
     private static final String MUL_STR_CODE = "c_{57}";
+    private static final String WRITEA_STR_CODE = "c_{58}";
     private static final String ARR_RANG_STR_CODE = "c_{59}";
-    private static final String ABT_ABT_STR_CODE = "c_{20} (c_{31} c_{40} c_{40})";
+    private static final String MIN_STR_CODE = "c_{60}";
+    private static final String INT_NEQ_STR_CODE = "c_{62}";
+    private static final String LESS_STR_CODE = "c_{63}";
+    private static final String LEQ_STR_CODE = "c_{64}";
+    private static final String GREATER_STR_CODE = "c_{65}";
+    private static final String GEQ_STR_CODE = "c_{66}";
+    private static final String ABT_ABT_STR_CODE = "(c_{20} (c_{31} c_{40} c_{40}))";
     private static final String LAMBDA_STR_CODE = "\\lambda";
 
     // Tablas de simbolos
@@ -54,43 +65,42 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private Stack<SymbolsTable> _idNames = new Stack<SymbolsTable>();   //x1,x2....xi
     private Stack<SymbolsTable> _idMTypes = new Stack<SymbolsTable>();  //Z,B,Z^[1..3]...
 
-    /** Profundidad actual del arbol */
-    private int _currRealDepth = 0;
 
     /**
-     * Genera un stringbuilder con prefijo -
-     * @param len Cantidad de prefijos
-     * @return Stringbuilder con - len veces.
+     * Revisa si un simbolo se encuentra en alguna declaracion de for
+     * @param symbol Simbolo a buscar
+     * @return true si esta en algun for. false en caso contrario.
      */
-    private StringBuilder generatePrefix(int len) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < len; builder.append('-'), ++i)
-            ;
-        return builder;
-    }
+    public boolean isSymbolInForStack(String symbol) {
+        Iterator<String> forIT = _forStack.iterator();
+        while (forIT.hasNext())
+        {
+            if (forIT.next().equals(symbol))
+                return true;
+        }
 
-
-
-    /**
-     * Visita un nodo, aumenta la profundidad, imprime el nombre del nodo,
-     * visita a sus hijos, y decrementa la profundidad.
-     * @param txt Texto a imprimir
-     * @param ctx Nodo a visitar
-     * @return vacio.
-     */
-    private String addPrintVisitLeave(String txt, ParserRuleContext ctx)
-    {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append(txt);
-        System.out.println(pref.toString());
-
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;
+        return false;
     }
 
     
+    /**
+     * Busca el tipo de un simbolo en las tablas. Si no se encuentra en las tablas,
+     * busca si se encuentra en un for.
+     * @param ident Simbolo a buscar
+     * @return Tipo del simbolo
+     */
+    public String lookSymbolType(String ident) {
+        SymbolsTable cur = _symbolStack.peek();
+        for(;cur != null; cur = cur.getPreviousTable()) {
+            if (cur.isSymbolInTable(ident))
+                return cur.getSymbolType(ident);
+        }
 
-    public String numberToCode(int number) {
+        return (isSymbolInForStack(ident) ? "int" : null);
+    }
+
+
+    private String numberToCode(int number) {
         Stack<String> tmp = new Stack<String>();
         StringBuilder res = new StringBuilder();
 
@@ -123,7 +133,33 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
-    public String typeToCode(String type) {
+    private String arrayReadCode(String arrName, String index) {
+        return String.format("(%s %s)", arrName, index);
+    }
+
+    //private String gentuplas(GCLGrammarParser.ArrayInitContext ctx, String type) {
+//
+    //    Pattern p = Pattern.compile("-*[0-9]+");
+    //    Matcher match = p.matcher(type);
+//
+    //    Integer lo = null;
+    //    Integer hi = null;
+    //    match.find();
+    //    lo = Integer.parseInt(match.group());
+    //    match.find();
+    //    hi = Integer.parseInt(match.group());
+//
+    //    GCLGrammarParser.ArrayInitContext cur = 
+    //    StringBuilder tup = new StringBuilder("");
+    //    while (lo <= hi) {
+    //        if (ctx.arrayInit != null) {
+    //            tup.append(PAR_ORD_STR_CODE + " " + ctx.asignable() + " " + low.toString())
+    //        }
+    //        
+    //    }
+    //}
+
+    private String typeToCode(String type) {
         switch (type) {
             case "int":
                 return INT_STR_CODE;
@@ -153,7 +189,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
-    public void declareVar(String id, String type) {
+    private void declareVar(String id, String type) {
         SymbolsTable nId = _idNames.peek();
         SymbolsTable nType = _idMTypes.peek();
 
@@ -163,10 +199,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
-    public String getSymbolMID(String symb) {
-        ListIterator<SymbolsTable> tIt = _idNames.listIterator(_idNames.size());
-        while (tIt.hasPrevious()) {
-            SymbolsTable cur = tIt.previous();
+    private String getSymbolMID(String symb) {
+        for (SymbolsTable cur = _idNames.peek(); cur != null; cur = cur.getPreviousTable()) {
             if (cur.isSymbolInTable(symb))
                 return cur.getSymbolType(symb);
         }
@@ -222,15 +256,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
     
-    public String generarParTipoEspacio() {
-        StringBuilder tuplaCruz = new StringBuilder(String.format("(%s ", TUPL_STR_CODE));
-        StringBuilder cruz = new StringBuilder("(");
-
+    private String generarTuplaEspacio() {
+        StringBuilder cruz = new StringBuilder("");
         SymbolsTable cur = null;
         int totCount = 0;
         
         for (cur = _idMTypes.peek(); cur != null; cur = cur.getPreviousTable())
-        totCount += cur.size();
+            totCount += cur.size();
         
         int parCount = totCount;
         for (cur = _idMTypes.peek(); cur != null; cur = cur.getPreviousTable()) {
@@ -247,16 +279,21 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         }
 
         // checar nro parentesis
-        for (int p = 0; p < parCount; ++p) {
+        for (int p = 0; p < parCount - 1; ++p) {
             cruz.append(")");
         }
 
-        tuplaCruz.append(cruz.toString()).append(")");
-        return String.format("(%s)", crossProductCode(tuplaCruz.toString(), tuplaCruz.toString()));
+        return String.format("(%s (%s))", TUPL_STR_CODE, cruz.toString());
     }
 
 
-    public String generarEspacioAsignacion(String symb, String exp) {
+    private String generarParTipoEspacio() {
+        String tupla = generarTuplaEspacio();
+        return String.format("(%s)", crossProductCode(tupla, tupla));
+    }
+
+
+    private String generarEspacioAsignacion(String symb, String exp) {
         StringBuilder total = new StringBuilder(String.format("%s (%s x_{120} . ", 
             SET_COMP_STR_CODE, LAMBDA_STR_CODE));
 
@@ -280,7 +317,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
         total.append(exist.toString());
         total.append(" " + types.toString());        
-        return String.format("(%s)", total.toString());
+        return String.format("(%s %s (%s))", SMALL_UNION_STR_CODE, ABT_ABT_STR_CODE, total.toString());
     }
     
 
@@ -337,7 +374,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitNumericLit(GCLGrammarParser.NumericLitContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
@@ -357,20 +394,20 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         return String.format("(%s)", trad.toString());
     }
 
-
-    // Preguntarle a flavi por el - unario
     @Override
     public String visitUnMinExp(GCLGrammarParser.UnMinExpContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++);
-        pref.append("Minus | type : int");
-        System.err.println(pref.toString());
+        StringBuilder trad = new StringBuilder(MIN_STR_CODE + " ");
 
-        GCLGrammarParser.ExpContext cExp = ctx.exp();
-
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;       
+        ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
+        while (iterator.hasPrevious()) {
+            org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
+            if (cur instanceof TerminalNode)
+                continue;
+            
+            trad.append(visit(cur));
+        }
+        return String.format("(%s)", trad.toString());      
     }
 
 
@@ -387,6 +424,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             
             trad.append(visit(cur));
         }
+
         return String.format("(%s)", trad.toString());
     }
 
@@ -394,16 +432,15 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitMinPlusExp(GCLGrammarParser.MinPlusExpContext ctx)
     {
-        StringBuilder trad = new StringBuilder("(");
+        StringBuilder trad = new StringBuilder("");
         switch (ctx.op.getType()) {
             case GCLGrammarParser.TkPlus:
-                trad.append(SUM_STR_CODE).append(" ");
+                trad.append(SUM_STR_CODE + " ");
                 break;
             case GCLGrammarParser.TkMinus:
-                trad.append(SUB_STR_CODE).append(" ");
+                trad.append(SUB_STR_CODE + " ");
                 break;
         }
-
         ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
         while (iterator.hasPrevious()) {
             org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
@@ -416,17 +453,14 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 continue;
             }
         }
-
-        trad.append(")");
-        System.out.println(trad.toString());
-        return trad.toString();
+        return String.format("(%s)", trad.toString());
     }
 
 
     @Override
     public String visitMultExp(GCLGrammarParser.MultExpContext ctx)
     {
-        StringBuilder trad = new StringBuilder("(").append(MUL_STR_CODE).append(" ");
+        StringBuilder trad = new StringBuilder(MUL_STR_CODE + " ");
         ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
         while (iterator.hasPrevious()) {
             org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
@@ -439,32 +473,28 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 continue;
             }
         }
-
-        trad.append(")");
-        System.out.println(trad.toString());
-        return trad.toString();
+        return String.format("(%s)", trad.toString());
     }
 
 
     @Override
     public String visitOrdExp(GCLGrammarParser.OrdExpContext ctx)
     {
-        StringBuilder trad = new StringBuilder();
+        StringBuilder trad = new StringBuilder("");
         switch (ctx.op.getType()) {
             case GCLGrammarParser.TkLeq:
-                trad.append("Leq");
+                trad.append(LEQ_STR_CODE).append(" ");
                 break;
             case GCLGrammarParser.TkLess:
-                trad.append("Less");
+                trad.append(LESS_STR_CODE).append(" ");
                 break;
             case GCLGrammarParser.TkGeq:
-                trad.append("Geq");
+                trad.append(GEQ_STR_CODE).append(" ");
                 break;
             case GCLGrammarParser.TkGreater:
-                trad.append("Greater");
+                trad.append(GREATER_STR_CODE).append(" ");
                 break;
         }
-        trad.append(" (");
         ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
         while (iterator.hasPrevious()) {
             org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
@@ -477,54 +507,59 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 continue;
             }
         }
-
-        trad.append(")");
-        return trad.toString();
+        return String.format("(%s)", trad.toString());
     }
 
 
     @Override
     public String visitEqExp(GCLGrammarParser.EqExpContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++);
+        StringBuilder trad = new StringBuilder("");
         switch (ctx.op.getType()) {
             case GCLGrammarParser.TkEqual:
-                pref.append("Equal");
+                switch (ctx.a.expType) {
+                    case "bool": 
+                        trad.append(BOOL_EQ_STR_CODE).append(" ");
+                        break;
+                    case "int":
+                        trad.append(INT_EQ_STR_CODE).append(" ");
+                        break;
+                }
                 break;
+
             case GCLGrammarParser.TkNEqual:
-                pref.append("NotEqual");
+                switch (ctx.a.expType) {
+                    case "bool": 
+                        trad.append(BOOL_NEQ_STR_CODE).append(" ");
+                        break;
+                    case "int":
+                        trad.append(INT_NEQ_STR_CODE).append(" ");
+                        break;
+                }
                 break;
         }
 
-        pref.append(" | type: bool");
-        System.out.println(pref.toString());
-
-        String cType = null;
-        for (GCLGrammarParser.ExpContext cExp : ctx.exp()) {
-
-            if (cType == null) {
-                cType = cExp.expType;
-                visit(cExp);
+        ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
+        while (iterator.hasPrevious()) {
+            org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
+            if (cur instanceof TerminalNode)
+                continue;
+                    
+            trad.append(visit(cur));
+            if (iterator.hasPrevious()) {
+                trad.append(" ");
                 continue;
             }
-            
-            if (!cType.equals(cExp.expType)) {
-                Token tok = cExp.start;
-                System.exit(-1);
-            }
-
-            visit(cExp);
         }
 
-        _currRealDepth--;
-        return null;
+        return String.format("(%s)", trad.toString());
     }
 
 
     @Override
     public String visitAndExp(GCLGrammarParser.AndExpContext ctx)
     {
-        StringBuilder trad = new StringBuilder("(").append(AND_STR_CODE).append(" ");;
+        StringBuilder trad = new StringBuilder(AND_STR_CODE + " ");
         ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
         while (iterator.hasPrevious()) {
             org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
@@ -538,16 +573,14 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             }
         }
 
-        trad.append(")");
-        System.out.println(trad.toString());
-        return trad.toString();
+        return String.format("(%s)", trad.toString());
     }
 
 
     @Override
     public String visitOrExp(GCLGrammarParser.OrExpContext ctx)
     {
-        StringBuilder trad = new StringBuilder("(").append(OR_STR_CODE).append(" ");;
+        StringBuilder trad = new StringBuilder(OR_STR_CODE + " ");
         ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
         while (iterator.hasPrevious()) {
             org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
@@ -560,10 +593,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 continue;
             }
         }
-
-        trad.append(")");
-        System.out.println(trad.toString());
-        return trad.toString();
+        return String.format("(%s)", trad.toString());
     }
 
 
@@ -603,7 +633,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitReadAExp(GCLGrammarParser.ReadAExpContext ctx)
     {
-        return visitChildren(ctx);
+        return visit(ctx.readA());
     }
 
 
@@ -612,16 +642,19 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     {
         return visitChildren(ctx);
     }
-    
+
 
     /**
      * Visita un nodo de inicializacion de arreglo
      * @param ctx Contexto de regla ArrayInit
-     * @param len Largo del arreglo a iniciar
      * @return nada
      */
-    public String visitArrayInitLen(GCLGrammarParser.ArrayInitContext ctx, int len)
+    public String visitArrayInit(GCLGrammarParser.ArrayInitContext ctx, int indice)
     {
+        System.out.println(indice);
+        if (ctx.arrayInit() != null)
+            visitArrayInit(ctx.arrayInit(), ++indice);
+
         return null;
     }
 
@@ -629,29 +662,57 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitAsignation(GCLGrammarParser.AsignationContext ctx)
     {
-        System.out.println(generarEspacioAsignacion("x_{2}", "c_{46}"));
-        return visitChildren(ctx);
+        String matId = getSymbolMID(ctx.TkId().getText());
+        if (ctx.asignable() != null)
+            return generarEspacioAsignacion(matId, visit(ctx.asignable()));
+
+        // Pon regex aca y sacas el largo.
+        return generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), 0));
     }
 
 
     @Override
     public String visitReadA(GCLGrammarParser.ReadAContext ctx)
     {
-        return null;
+        TerminalNode id;
+        if ((id = ctx.TkId()) != null)
+            return arrayReadCode(getSymbolMID(id.getText()), visit(ctx.exp()));
+        
+        System.out.println(arrayReadCode(visit(ctx.writeA()), visit(ctx.exp())));
+        return arrayReadCode(visit(ctx.writeA()), visit(ctx.exp()));
     }
 
 
     @Override
     public String visitWriteA(GCLGrammarParser.WriteAContext ctx)
     {
-        return null;
+        if (ctx.TkId() != null) {
+            String id = getSymbolMID(ctx.TkId().getText());
+            return String.format("(%s %s %s)", WRITEA_STR_CODE, visit(ctx.writeABody()), id);
+        }
+
+        return String.format("(%s %s %s)", WRITEA_STR_CODE, visit(ctx.writeABody()), visit(ctx.writeA()));
     }
 
 
     @Override
     public String visitWriteABody(GCLGrammarParser.WriteABodyContext ctx)
     {
-        return null;
+        StringBuilder res = new StringBuilder("");
+        ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
+        while (iterator.hasPrevious()) {
+            org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
+            if (cur instanceof TerminalNode)
+                continue;
+            
+            res.append(visit(cur));
+            if (iterator.hasPrevious()) {
+                res.append(" ");
+                continue;
+            }
+        }
+
+        return res.toString();
     }
 
 
@@ -661,113 +722,111 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         // Instruccion skip
         if (ctx.TkSkip() != null)
         {
-            StringBuilder pref = generatePrefix(_currRealDepth++).append("skip");
-            System.out.println(pref.toString());
-            _currRealDepth--;
-            return null;
+            StringBuilder trad = new StringBuilder(IDENT_STR_CODE + " ");
+            trad.append(generarTuplaEspacio());
+            return String.format("(%s)", trad.toString());
         }
 
-        visitChildren(ctx);
-        return null;
+        return visit(ctx.getChild(0));
     }
 
 
     @Override
     public String visitForOp(GCLGrammarParser.ForOpContext ctx)
     {
-        addPrintVisitLeave("For", ctx);
+        //addPrintVisitLeave("For", ctx);
         _forStack.pop();
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitIn(GCLGrammarParser.InContext ctx)
     {
-        StringBuilder pref = generatePrefix(_currRealDepth++).append("In");
-        System.out.println(pref.toString());
-
+        //StringBuilder pref = generatePrefix(_currRealDepth++).append("In");
+        //System.out.println(pref.toString());
+//
+//
         String id = ctx.TkId().getText();
-
         _forStack.push(id);
-        pref = generatePrefix(_currRealDepth).append("Ident: " + id + " | type: int");
-        System.out.println(pref);
-
-        visitChildren(ctx);
-        _currRealDepth--;
-        return null;
+        //pref = generatePrefix(_currRealDepth).append("Ident: " + id + " | type: int");
+        //System.out.println(pref);
+//
+        //visitChildren(ctx);
+        //_currRealDepth--;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitTo(GCLGrammarParser.ToContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitPrinteable(GCLGrammarParser.PrinteableContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitPrint(GCLGrammarParser.PrintContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitConcatenable(GCLGrammarParser.ConcatenableContext ctx)
     {
-        if (ctx.TkString() != null)
-        {
-            StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
-            pref = pref.append(" | type : string");
-            System.out.println(pref.toString());
-            _currRealDepth--;
-            return null;
-        }
-
-        visitChildren(ctx);
-        return null;
+        //if (ctx.TkString() != null)
+        //{
+        //    StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
+        //    pref = pref.append(" | type : string");
+        //    System.out.println(pref.toString());
+        //    _currRealDepth--;
+        //    return null;
+        //}
+//
+        //visitChildren(ctx);
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitConcatenation(GCLGrammarParser.ConcatenationContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitIfOp(GCLGrammarParser.IfOpContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitGuard(GCLGrammarParser.GuardContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitThen(GCLGrammarParser.ThenContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 
 
     @Override
     public String visitDoOp(GCLGrammarParser.DoOpContext ctx)
     {
-        return null;
+        return visitChildren(ctx);
     }
 }

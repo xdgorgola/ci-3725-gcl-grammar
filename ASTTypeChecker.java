@@ -5,7 +5,7 @@ import com.parsing.GCLGrammarParser;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Iterator;
-import java.util.ArrayDeque;
+import java.util.Stack;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -18,8 +18,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     
     // Tablas de simbolos
-    private ArrayDeque<SymbolsTable> _symbolStack = new ArrayDeque<SymbolsTable>();
-    private ArrayDeque<String> _forStack = new ArrayDeque<String>();
+    private Stack<SymbolsTable> _symbolStack = new Stack<SymbolsTable>();
+    private Stack<String> _forStack = new Stack<String>();
 
     /** Profundidad actual del arbol */
     private int _currRealDepth = 0;
@@ -44,7 +44,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
      * @return true si esta en alguna tabla. false en caso contrario.
      */
     public boolean isSymbolInTables(String symbol) {
-        SymbolsTable cur = _symbolStack.peek();
+        SymbolsTable cur = (_symbolStack.empty() ? null : _symbolStack.peek());
         for(;cur != null; cur = cur.getPreviousTable()) {
             if (cur.isSymbolInTable(symbol))
                 return true;
@@ -88,7 +88,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
      * @return Tipo del simbolo
      */
     public String lookSymbolType(String ident) {
-        SymbolsTable cur = _symbolStack.peek();
+        SymbolsTable cur = (_symbolStack.empty() ? null : _symbolStack.peek());
         for(;cur != null; cur = cur.getPreviousTable()) {
             if (cur.isSymbolInTable(ident))
                 return cur.getSymbolType(ident);
@@ -194,7 +194,7 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
 
     @Override
     public Void visitBlock(GCLGrammarParser.BlockContext ctx) {
-        ctx.symbols.setPreviousTable(_symbolStack.peek());
+        ctx.symbols.setPreviousTable((_symbolStack.empty() ? null : _symbolStack.peek()));
         _symbolStack.push(ctx.symbols);
         addPrintVisitLeave("Block", ctx);
         _symbolStack.pop();

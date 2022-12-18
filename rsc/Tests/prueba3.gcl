@@ -1,8 +1,10 @@
 |[
    declare
-      x,y,z : int;
-      arr   : array[1..3]
+      x,y : int
 
-      //x := arr(1:2)[1]
-      arr := 1, 2, 3
+   skip;
+   if (true /\ false) -->
+      skip
+   fi;
+   skip
 ]|

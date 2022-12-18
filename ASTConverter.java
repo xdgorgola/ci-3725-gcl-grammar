@@ -42,6 +42,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private static final String BOOL_STR_CODE = "c_{37}";
     private static final String POW_STR_CODE = "c_{38}";
     private static final String IDENT_STR_CODE = "c_{39}";
+    private static final String ABORT_STR_CODE = "c_{40}";
+    private static final String COMP_POW_STR_CODE = "c_{41}";
     private static final String NUM_STR_CODE = "c_{54}";
     private static final String SUM_STR_CODE = "c_{55}";
     private static final String SUB_STR_CODE = "c_{56}";
@@ -58,8 +60,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private static final String LAMBDA_STR_CODE = "\\lambda";
 
     // Tablas de simbolos
-    private ArrayDeque<SymbolsTable> _symbolStack = new ArrayDeque<SymbolsTable>();
-    private ArrayDeque<String> _forStack = new ArrayDeque<String>();
+    private Stack<SymbolsTable> _symbolStack = new Stack<SymbolsTable>();
+    private Stack<String> _forStack = new Stack<String>();
 
     // Usamos stack en vez de ArrayDeque para recorrer el iterator de bottom to top
     private int _idNum = 0;
@@ -91,7 +93,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
      * @return Tipo del simbolo
      */
     public String lookSymbolType(String ident) {
-        SymbolsTable cur = _symbolStack.peek();
+        SymbolsTable cur = (_symbolStack.empty() ? null : _symbolStack.peek());
         for(;cur != null; cur = cur.getPreviousTable()) {
             if (cur.isSymbolInTable(ident))
                 return cur.getSymbolType(ident);
@@ -104,9 +106,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private String numberToCode(int number) {
         Stack<String> tmp = new Stack<String>();
         StringBuilder res = new StringBuilder();
+        boolean neg = number < 0;
 
         if (number == 0)
             return "(c_{42})";
+
+        if (neg)
+            number *= - 1;
             
         while (number > 0) {
             int dig = number % 10;
@@ -115,7 +121,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         }
 
         if (tmp.size() == 1)
+        {
+            if (neg)
+                return String.format("(%s %s)", MIN_STR_CODE, tmp.pop());
+
             return String.format("(%s)", tmp.pop());
+        }
 
         for (int i = 0; !tmp.isEmpty(); i += 2)
         {
@@ -130,6 +141,9 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             }
         }
         
+        if (neg)
+            return String.format("(%s %s)", MIN_STR_CODE, res.toString());
+
         return res.toString();
     }
 
@@ -215,13 +229,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 String id = ids[i];
                 if (totCount > 1) {
                     names.append(commaSeparateCode("(", id));
-
-                    exps.append(commaSeparateCode("(", (id.equals(symb) ? CURLY_STR_CODE + exp : id)));
+                    exps.append(commaSeparateCode("(", (id.equals(symb) ? exp : id)));
                     continue;
                 }
 
                 names.append(" " + ids[i]);
-                exps.append(" " + (id.equals(symb) ? CURLY_STR_CODE + exp : id));
+                exps.append(" " + (id.equals(symb) ? exp : id));
             }
         }
 
@@ -279,19 +292,20 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         StringBuilder exist = new StringBuilder("");
         StringBuilder equ = new StringBuilder(String.format("(%s %s %s)", INT_EQ_STR_CODE, generarParEspacio(symb, exp), "x_{120}"));
         StringBuilder types = new StringBuilder(String.format("(%s x_{120} . %s)", LAMBDA_STR_CODE, generarParTipoEspacio()));
-
+        int p = 0;
         for (int t = 0; t < _idNames.size(); ++t) {
-            SymbolsTable cur = _idNames.get(t);
+            SymbolsTable cur = _idNames.get(t); // ver orden de esto :) problema por aca en existenciales!
             String[] ids = cur.getValues();
+            p += ids.length;
             for (int i = 0; i < ids.length; ++i) {
                 String id = ids[i];
                 exist.append(String.format("%s (%s %s . ", EXIST_OCON_STR_CODE, LAMBDA_STR_CODE, id)); // existenciales
             }
+        }
 
-            exist.append(equ);
-            for (int i = 0; i <= ids.length; ++i) {
-                exist.append(")");
-            }
+        exist.append(equ);
+        for (int i = 0; i <= p; ++i) {
+            exist.append(")");
         }
 
         total.append(exist.toString());
@@ -303,9 +317,16 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitBlock(GCLGrammarParser.BlockContext ctx) {
         _symbolStack.add(ctx.symbols);
-        visitChildren(ctx);
+        if (ctx.declarationBlock() != null)
+            visit(ctx.declarationBlock());
+
+        String res = visit(ctx.inst() != null ? ctx.inst() : ctx.seq());
+
         _symbolStack.pop();
-        return null;
+        _idMTypes.pop();
+        _idNames.pop();
+        _idNum -= ctx.symbols.size();
+        return res;
     }
 
 
@@ -313,7 +334,9 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     public String visitDeclarationBlock(GCLGrammarParser.DeclarationBlockContext ctx) {
         _idNames.add(new SymbolsTable(_idNames.isEmpty() ? null : _idNames.peek()));
         _idMTypes.add(new SymbolsTable(_idMTypes.isEmpty() ? null : _idMTypes.peek()));
-        return visitChildren(ctx);
+
+        visitChildren(ctx);
+        return "";
     }
 
 
@@ -321,7 +344,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     public String visitSeqDecl(GCLGrammarParser.SeqDeclContext ctx)
     {
         visitChildren(ctx);
-        return null;
+        return "";
     }
 
 
@@ -346,7 +369,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     public String visitDecl(GCLGrammarParser.DeclContext ctx)
     {
         visitChildren(ctx);
-        return null;
+        return "";
     }
 
 
@@ -370,6 +393,9 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             
             trad.append(visit(cur));
         }
+
+        System.out.println(String.format("(%s)", trad.toString()));
+        System.out.println();
         return String.format("(%s)", trad.toString());
     }
 
@@ -636,7 +662,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 trad.append("( " + PAR_ORD_STR_CODE + " " + visitAsignable(cAsig) + " " + numberToCode(indice) + ")" + " ");
             }
             trad.append(visitArrayInit(ctx.arrayInit(), --indice));
-            return String.format("(%s)", trad.toString());
+
+            if (ctx.parent instanceof GCLGrammarParser.ArrayInitContext)
+                return String.format("(%s)", trad.toString());
+
+            return String.format("(%s (%s))", CURLY_STR_CODE, trad.toString());
         }
 
         ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
@@ -651,6 +681,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 continue;
             }
         }
+        
         return String.format("(%s)", trad.toString());
     }
 
@@ -658,16 +689,21 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitAsignation(GCLGrammarParser.AsignationContext ctx)
     {
+        System.out.println(ctx.getText());
         String matId = getSymbolMID(ctx.TkId().getText());
-        if (ctx.asignable() != null)
+        if (ctx.asignable() != null) {
+            System.out.println(generarEspacioAsignacion(matId, visit(ctx.asignable())));
+            System.out.println();
             return generarEspacioAsignacion(matId, visit(ctx.asignable()));
+        }
 
         Pattern p = Pattern.compile("-*[0-9]+");
         Matcher match = p.matcher(lookSymbolType(ctx.TkId().getText()));
-        match.find();
-        match.find();
+        match.find(); match.find();
+        System.out.println(match.group());
       
         System.out.println(generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group()))));
+        System.out.println();
         return generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group())));
     }
 
@@ -806,22 +842,70 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitIfOp(GCLGrammarParser.IfOpContext ctx)
     {
-        return visitChildren(ctx);
+        String[] ops;
+        if (ctx.guard() != null)
+            ops = auxGenGuardIf(ctx.guard());
+        else
+            ops = generarThenIf(ctx.then());
+        
+        ops[1] = String.format("(%s (%s (%s %s) (%s %s)))", 
+            TUPL_STR_CODE, CROSS_STR_CODE, CURLY_STR_CODE, ABORT_STR_CODE, COMP_POW_STR_CODE, ops[1]);
+        
+        return String.format("(%s %s %s)", SMALL_UNION_STR_CODE, ops[1], ops[0]);
     }
 
 
-    @Override
-    public String visitGuard(GCLGrammarParser.GuardContext ctx)
+    private String generarTi(GCLGrammarParser.ExpContext cond) {
+        return String.format("(%s (%s x_{120} . %s) (%s x_{120} . %s))",
+            SET_COMP_STR_CODE, LAMBDA_STR_CODE, visit(cond), LAMBDA_STR_CODE, generarTuplaEspacio());
+    }
+
+
+    private String[] generarThenIf(GCLGrammarParser.ThenContext then) {
+        String ti = generarTi(then.exp());
+        String semIns = (then.inst() != null ? visit(then.inst()) : visit(then.seq()));
+        return new String[] 
+            {
+                String.format("(%s (%s (%s %s) %s))", TUPL_STR_CODE, SEQ_STR_CODE, IDENT_STR_CODE, ti, semIns), 
+                ti
+            };
+    } 
+
+
+    private String[] auxGenGuardIf(GCLGrammarParser.GuardContext guard)
     {
-        return visitChildren(ctx);
+        if (guard.guard() != null) {
+            String[] cgp = auxGenGuardIf(guard.guard());
+            String[] then = generarThenIf(guard.then(0));
+            return new String[] 
+            {
+                String.format("(%s %s %s)", SMALL_UNION_STR_CODE, then[0], cgp[0]),
+                String.format("(%s %s %s)", SMALL_UNION_STR_CODE, then[1], cgp[1])
+            };
+        }
+        String[] thenL = generarThenIf(guard.then(0)); // checar si es de izq a derecha
+        String[] thenR = generarThenIf(guard.then(1));
+
+        return new String[] 
+            {
+                String.format("(%s %s %s)", SMALL_UNION_STR_CODE, thenR[0], thenL[0]),
+                String.format("(%s %s %s)", SMALL_UNION_STR_CODE, thenR[1], thenL[1])
+            };
     }
 
 
-    @Override
-    public String visitThen(GCLGrammarParser.ThenContext ctx)
-    {
-        return visitChildren(ctx);
-    }
+    //@Override
+    //public String[] visitGuard(GCLGrammarParser.GuardContext ctx)
+    //{
+    //    return visitChildren(ctx);
+    //}
+
+
+    //@Override
+    //public String visitThen(GCLGrammarParser.ThenContext ctx)
+    //{
+    //    return visitChildren(ctx);
+    //}
 
 
     @Override

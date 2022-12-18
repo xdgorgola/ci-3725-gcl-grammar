@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.ListIterator;
 import java.util.Stack;
 import java.util.Map.Entry;
+import java.nio.file.SecureDirectoryStream;
 import java.util.ArrayDeque;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -137,28 +138,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         return String.format("(%s %s)", arrName, index);
     }
 
-    //private String gentuplas(GCLGrammarParser.ArrayInitContext ctx, String type) {
-//
-    //    Pattern p = Pattern.compile("-*[0-9]+");
-    //    Matcher match = p.matcher(type);
-//
-    //    Integer lo = null;
-    //    Integer hi = null;
-    //    match.find();
-    //    lo = Integer.parseInt(match.group());
-    //    match.find();
-    //    hi = Integer.parseInt(match.group());
-//
-    //    GCLGrammarParser.ArrayInitContext cur = 
-    //    StringBuilder tup = new StringBuilder("");
-    //    while (lo <= hi) {
-    //        if (ctx.arrayInit != null) {
-    //            tup.append(PAR_ORD_STR_CODE + " " + ctx.asignable() + " " + low.toString())
-    //        }
-    //        
-    //    }
-    //}
-
     private String typeToCode(String type) {
         switch (type) {
             case "int":
@@ -237,12 +216,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
                 if (totCount > 1) {
                     names.append(commaSeparateCode("(", id));
 
-                    exps.append(commaSeparateCode("(", (id.equals(symb) ? exp : id)));
+                    exps.append(commaSeparateCode("(", (id.equals(symb) ? CURLY_STR_CODE + exp : id)));
                     continue;
                 }
 
                 names.append(" " + ids[i]);
-                exps.append(" " + (id.equals(symb) ? exp : id));
+                exps.append(" " + (id.equals(symb) ? CURLY_STR_CODE + exp : id));
             }
         }
 
@@ -651,11 +630,28 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
      */
     public String visitArrayInit(GCLGrammarParser.ArrayInitContext ctx, int indice)
     {
-        System.out.println(indice);
-        if (ctx.arrayInit() != null)
-            visitArrayInit(ctx.arrayInit(), ++indice);
+        StringBuilder trad = new StringBuilder(COMMA_STR_CODE + " ");
+        if (ctx.arrayInit() != null) {
+            for (GCLGrammarParser.AsignableContext cAsig : ctx.asignable()) {
+                trad.append("( " + PAR_ORD_STR_CODE + " " + visitAsignable(cAsig) + " " + numberToCode(indice) + ")" + " ");
+            }
+            trad.append(visitArrayInit(ctx.arrayInit(), --indice));
+            return String.format("(%s)", trad.toString());
+        }
 
-        return null;
+        ListIterator<org.antlr.v4.runtime.tree.ParseTree> iterator = ctx.children.listIterator(ctx.children.size());
+        while (iterator.hasPrevious()) {
+            org.antlr.v4.runtime.tree.ParseTree cur = iterator.previous();
+            if (cur instanceof TerminalNode)
+                continue;
+                
+            trad.append("(" + PAR_ORD_STR_CODE + " " + visit(cur) + " " + numberToCode(indice--) + ")");
+            if (iterator.hasPrevious()) {
+                trad.append(" ");
+                continue;
+            }
+        }
+        return String.format("(%s)", trad.toString());
     }
 
 
@@ -666,8 +662,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         if (ctx.asignable() != null)
             return generarEspacioAsignacion(matId, visit(ctx.asignable()));
 
-        // Pon regex aca y sacas el largo.
-        return generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), 0));
+        Pattern p = Pattern.compile("-*[0-9]+");
+        Matcher match = p.matcher(lookSymbolType(ctx.TkId().getText()));
+        match.find();
+        match.find();
+      
+        System.out.println(generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group()))));
+        return generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group())));
     }
 
 
@@ -678,7 +679,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         if ((id = ctx.TkId()) != null)
             return arrayReadCode(getSymbolMID(id.getText()), visit(ctx.exp()));
         
-        System.out.println(arrayReadCode(visit(ctx.writeA()), visit(ctx.exp())));
         return arrayReadCode(visit(ctx.writeA()), visit(ctx.exp()));
     }
 

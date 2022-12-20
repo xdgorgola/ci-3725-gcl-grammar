@@ -56,6 +56,14 @@ public class SymbolsTable {
     }
 
 
+    public SymbolsTable clone() {
+        SymbolsTable cl = new SymbolsTable();
+        cl._symbolTable = new LinkedHashMap<>(_symbolTable);
+        cl._previousTable = (cl._previousTable == null ? null : cl._previousTable.clone());
+        return cl;
+    }
+
+
     public SymbolsTable() {
         _symbolTable = new LinkedHashMap<String, String>();
     }
@@ -65,4 +73,6 @@ public class SymbolsTable {
         _symbolTable = new LinkedHashMap<String, String>();
         _previousTable = prev;
     }
+
+
 }

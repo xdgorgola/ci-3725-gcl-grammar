@@ -1,5 +1,6 @@
 import com.parsing.utils.SymbolsTable;
 import com.parsing.GCLGrammarParser;
+import com.parsing.GCLGrammarLexer;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -11,9 +12,14 @@ import java.util.Map.Entry;
 import java.nio.file.SecureDirectoryStream;
 import java.util.ArrayDeque;
 
+import org.antlr.runtime.ParserRuleReturnScope;
+import org.antlr.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.CommonTokenFactory;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 /** 
  * Clase que se encarga de visitar cada uno de los nodos del arbol sintactico abstracto generado
@@ -67,7 +73,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private int _idNum = 0;
     private Stack<SymbolsTable> _idNames = new Stack<SymbolsTable>();   //x1,x2....xi
     private Stack<SymbolsTable> _idMTypes = new Stack<SymbolsTable>();  //Z,B,Z^[1..3]...
-
 
     /**
      * Revisa si un simbolo se encuentra en alguna declaracion de for
@@ -279,6 +284,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    private String generarEspacioExt() {
+        return String.format("(%s (%s %s) %s)", 
+            SMALL_UNION_STR_CODE, CURLY_STR_CODE, ABORT_STR_CODE, generarTuplaEspacio());
+    }
+
+
     private String generarParTipoEspacio() {
         String tupla = generarTuplaEspacio();
         return String.format("(%s)", crossProductCode(tupla, tupla));
@@ -394,8 +405,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             trad.append(visit(cur));
         }
 
-        System.out.println(String.format("(%s)", trad.toString()));
-        System.out.println();
         return String.format("(%s)", trad.toString());
     }
 
@@ -605,8 +614,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitParExp(GCLGrammarParser.ParExpContext ctx)
     {
-         // Ignoramos los tokens parentesis
-        return visit(ctx.exp());
+        return String.format("(%s %s)", TUPL_STR_CODE, visit(ctx.exp()));
     }
 
 
@@ -689,21 +697,20 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitAsignation(GCLGrammarParser.AsignationContext ctx)
     {
-        System.out.println(ctx.getText());
         String matId = getSymbolMID(ctx.TkId().getText());
         if (ctx.asignable() != null) {
-            System.out.println(generarEspacioAsignacion(matId, visit(ctx.asignable())));
-            System.out.println();
+            //System.out.println(generarEspacioAsignacion(matId, visit(ctx.asignable())));
+            //System.out.println();
             return generarEspacioAsignacion(matId, visit(ctx.asignable()));
         }
 
         Pattern p = Pattern.compile("-*[0-9]+");
         Matcher match = p.matcher(lookSymbolType(ctx.TkId().getText()));
         match.find(); match.find();
-        System.out.println(match.group());
-      
-        System.out.println(generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group()))));
-        System.out.println();
+        
+        //System.out.println(match.group());
+        //System.out.println(generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group()))));
+        //System.out.println();
         return generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group())));
     }
 
@@ -757,11 +764,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     {
         // Instruccion skip
         if (ctx.TkSkip() != null)
-        {
-            StringBuilder trad = new StringBuilder(IDENT_STR_CODE + " ");
-            trad.append(generarTuplaEspacio());
-            return String.format("(%s)", trad.toString());
-        }
+            return String.format("(%s %s)", IDENT_STR_CODE, generarEspacioExt());
 
         return visit(ctx.getChild(0));
     }
@@ -770,7 +773,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitForOp(GCLGrammarParser.ForOpContext ctx)
     {
-        //addPrintVisitLeave("For", ctx);
         _forStack.pop();
         return visitChildren(ctx);
     }
@@ -818,16 +820,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitConcatenable(GCLGrammarParser.ConcatenableContext ctx)
     {
-        //if (ctx.TkString() != null)
-        //{
-        //    StringBuilder pref = generatePrefix(_currRealDepth++).append("String: ").append(ctx.getText());
-        //    pref = pref.append(" | type : string");
-        //    System.out.println(pref.toString());
-        //    _currRealDepth--;
-        //    return null;
-        //}
-//
-        //visitChildren(ctx);
         return visitChildren(ctx);
     }
 
@@ -884,7 +876,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             };
         }
         String[] thenL = generarThenIf(guard.then(0)); // checar si es de izq a derecha
-        String[] thenR = generarThenIf(guard.then(1));
+        String[] thenR = generarThenIf(guard.then(1)); // checar si es de izq a derecha
 
         return new String[] 
             {
@@ -908,9 +900,112 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     //}
 
 
+    private String generarDo0(GCLGrammarParser.ThenContext root) {
+        ASTCopy copier = new ASTCopy();
+        GCLGrammarParser.ThenContext thenCpy = (GCLGrammarParser.ThenContext)copier.visit(root);
+        GCLGrammarParser.IfOpContext do0Root = new GCLGrammarParser.IfOpContext(null, root.invokingState);
+        GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, root.invokingState);
+        GCLGrammarParser.NotExpContext notDo0G = new GCLGrammarParser.NotExpContext(new GCLGrammarParser.ExpContext());
+
+        skipDmmy.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkSkip, "skip")));
+
+        do0Root.addChild(thenCpy);  // agregamos then al if
+        thenCpy.removeLastChild();  // quitamos inst | seq
+        thenCpy.addChild(skipDmmy); // agregamos la instruccion de skip
+            
+        notDo0G.addAnyChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkNot, "!")));
+        notDo0G.addChild(thenCpy.exp()); //negamos la cond original
+        thenCpy.children.set(0, notDo0G); // reemplazamos la condicion.
+
+        return visit(do0Root);
+    }
+
+
+    private GCLGrammarParser.IfOpContext generarIfDummy(int invkState) {
+        GCLGrammarParser.IfOpContext ifRoot = new GCLGrammarParser.IfOpContext(null, invkState);
+        ifRoot.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkIf, "if")));
+        ifRoot.addChild((RuleContext)null);
+        ifRoot.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkFi, "fi")));
+
+        return ifRoot;
+    }
+
+
+    private String generarDoIfSing(GCLGrammarParser.ThenContext root) {
+        ASTCopy copier = new ASTCopy();
+
+        GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, root.invokingState);
+        skipDmmy.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkSkip, "skip")));
+
+        GCLGrammarParser.IfOpContext ifRoot = generarIfDummy(root.invokingState);
+        GCLGrammarParser.GuardContext ifGuard = new GCLGrammarParser.GuardContext(null, root.invokingState);
+        GCLGrammarParser.ThenContext topThen = new GCLGrammarParser.ThenContext(null, root.invokingState);
+        GCLGrammarParser.ThenContext botThen = new GCLGrammarParser.ThenContext(null, root.invokingState);
+
+        GCLGrammarParser.ExpContext condCpy1 = (GCLGrammarParser.ExpContext)copier.visit(root.exp());
+        GCLGrammarParser.ExpContext condCpy2 = (GCLGrammarParser.ExpContext)copier.visit(root.exp());
+        GCLGrammarParser.NotExpContext notCond = new GCLGrammarParser.NotExpContext(new GCLGrammarParser.ExpContext());
+
+        notCond.addAnyChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkNot, "!"))); 
+        notCond.addChild(condCpy2); // negamos cond
+        
+        topThen.addChild(condCpy1);     // then cond no negada
+        botThen.addChild(notCond);      // then cond negada
+        
+        topThen.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkArrow, "-->")));
+        botThen.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkArrow, "-->")));
+
+        if (root.inst() != null)
+            topThen.addChild((GCLGrammarParser.InstContext)copier.visit(root.inst())); // instruccion al then top
+        else
+            topThen.addChild((GCLGrammarParser.SeqContext)copier.visit(root.seq()));  // seq al then top
+        
+        botThen.addChild(skipDmmy); // skip a la negada
+
+        // creamos la guardia
+        ifGuard.addChild(topThen);
+        ifGuard.addAnyChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkGuard, "[]")));
+        ifGuard.addChild(botThen);
+
+        // padre de la guardia + actualizamos la guardia del if
+        ifGuard.parent = ifRoot;
+        ifRoot.children.set(1, ifGuard);
+
+        return visit(ifRoot);
+    }
+
+
+    private String generarDoIfMult(GCLGrammarParser.GuardContext gIni) {
+        ASTCopy copier = new ASTCopy();
+        GCLGrammarParser.GuardContext gcpy = (GCLGrammarParser.GuardContext)copier.visit(gIni);
+        GCLGrammarParser.IfOpContext ifRes = generarIfDummy(gIni.parent.invokingState);
+        ifRes.children.set(1, gcpy);
+        gcpy.setParent(ifRes);
+        
+        return visit(ifRes); 
+    }
+
+
     @Override
     public String visitDoOp(GCLGrammarParser.DoOpContext ctx)
     {
+        // de uno solo.
+        if (ctx.guard() == null) {
+            String do0 = generarDo0(ctx.then());
+            String ifDo = generarDoIfSing(ctx.then());
+
+            System.out.println("do0");
+            System.out.println(do0);
+            System.out.println();
+            System.out.println("ifDo");
+            System.out.println(ifDo);
+            System.out.println();
+            return visitChildren(ctx);
+        }
+
+        String ifInt = generarDoIfMult(ctx.guard());
+        System.out.println(ifInt);
+        // convertir multiples en una.
         return visitChildren(ctx);
     }
 }

@@ -1,5 +1,7 @@
 import com.parsing.utils.SymbolsTable;
 import com.parsing.GCLGrammarParser;
+import com.parsing.GCLGrammarParser.ExpContext;
+import com.parsing.GCLGrammarParser.ThenContext;
 import com.parsing.GCLGrammarLexer;
 
 import java.util.regex.Pattern;
@@ -11,6 +13,8 @@ import java.util.Stack;
 import java.util.Map.Entry;
 import java.nio.file.SecureDirectoryStream;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.tree.ParseTree;
@@ -975,14 +979,74 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
-    private String generarDoIfMult(GCLGrammarParser.GuardContext gIni) {
+    private GCLGrammarParser.IfOpContext generarDoIfMult(GCLGrammarParser.GuardContext gIni) {
         ASTCopy copier = new ASTCopy();
         GCLGrammarParser.GuardContext gcpy = (GCLGrammarParser.GuardContext)copier.visit(gIni);
         GCLGrammarParser.IfOpContext ifRes = generarIfDummy(gIni.parent.invokingState);
         ifRes.children.set(1, gcpy);
         gcpy.setParent(ifRes);
         
-        return visit(ifRes); 
+        return ifRes;
+    }
+
+
+    private ArrayDeque<GCLGrammarParser.ExpContext> extractCondsDo(GCLGrammarParser.GuardContext root) {
+        ArrayDeque<GCLGrammarParser.ExpContext> conds = new ArrayDeque<GCLGrammarParser.ExpContext>();
+
+        if (root.guard() != null)
+        {
+            ArrayDeque<GCLGrammarParser.ExpContext> cExps = extractCondsDo(root.guard());
+            
+            while (!cExps.isEmpty())
+                conds.offer(cExps.pop());
+            
+            conds.offer(root.then().get(0).exp());
+            return conds;
+        }
+
+        for (GCLGrammarParser.ThenContext thenC : root.then()) {
+            conds.offer(thenC.exp());
+        }
+
+        return conds;
+    }
+
+
+    private String generarDoMultiple(GCLGrammarParser.DoOpContext doRoot) {
+        ArrayDeque<GCLGrammarParser.ExpContext> conds = extractCondsDo(doRoot.guard());
+        GCLGrammarParser.OrExpContext condExp = null;
+        while (!conds.isEmpty()) {
+            if (condExp == null) {
+                condExp = new GCLGrammarParser.OrExpContext(new GCLGrammarParser.ExpContext());
+                condExp.addChild(conds.poll());
+                condExp.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkOr, "/\\")));
+                condExp.addChild(conds.poll());
+                continue;
+            }
+
+            GCLGrammarParser.OrExpContext tmp = new GCLGrammarParser.OrExpContext(new GCLGrammarParser.ExpContext());
+            tmp.addChild(condExp);
+            tmp.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkOr, "/\\")));
+            tmp.addChild(conds.poll());
+            condExp = tmp;
+        }
+        
+        System.out.println("nueva guardia multiple do");
+        System.out.println(visit(condExp));
+        System.out.println();
+        
+        GCLGrammarParser.IfOpContext ifInt = generarDoIfMult(doRoot.guard());
+        GCLGrammarParser.InstContext thenInst = new GCLGrammarParser.InstContext(null, doRoot.invokingState);
+        thenInst.addChild(ifInt);
+
+        GCLGrammarParser.ThenContext then = new GCLGrammarParser.ThenContext(null, doRoot.invokingState);
+        then.addChild(condExp);
+        then.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkArrow, "-->")));
+        then.addChild(thenInst);
+        
+        GCLGrammarParser.DoOpContext finalDo = new GCLGrammarParser.DoOpContext(null, doRoot.invokingState);
+        finalDo.addChild(then); // deberiamos agregar los tokens pero no nos interesa.
+        return visit(finalDo);
     }
 
 
@@ -1003,9 +1067,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             return visitChildren(ctx);
         }
 
-        String ifInt = generarDoIfMult(ctx.guard());
-        System.out.println(ifInt);
-        // convertir multiples en una.
-        return visitChildren(ctx);
+        return generarDoMultiple(ctx);
     }
 }

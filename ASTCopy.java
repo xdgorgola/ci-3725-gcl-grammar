@@ -1,9 +1,11 @@
+import com.parsing.GCLGrammarParser;
+import com.parsing.GCLGrammarParser.ExpContext;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
-import com.parsing.GCLGrammarParser;
 
 public class ASTCopy extends com.parsing.GCLGrammarBaseVisitor<ParseTree> implements Cloneable {
 
@@ -300,7 +302,7 @@ public class ASTCopy extends com.parsing.GCLGrammarBaseVisitor<ParseTree> implem
         cpy.stop = ctx.stop;
         cpy.expType = ctx.expType;
         cpy.op = ctx.op;
-
+        
         for (ParseTree c : ctx.children) {
             if (c instanceof TerminalNode) {
                 TerminalNode ccpy = (TerminalNode)visit(c);
@@ -310,6 +312,11 @@ public class ASTCopy extends com.parsing.GCLGrammarBaseVisitor<ParseTree> implem
             }
             
             ParserRuleContext ccpy = (ParserRuleContext)visit(c);
+            if (cpy.a == null)
+                cpy.a = (ExpContext)ccpy;
+            else
+                cpy.b = (ExpContext)ccpy;
+                
             ccpy.setParent(cpy);
             cpy.addChild(ccpy);
         }

@@ -43,7 +43,6 @@ public class GCL {
         }
 
         ASTConverter conv = new ASTConverter();
-        ASTCopy copier = new ASTCopy();
         BlockContext root = translator._gclParser.block();
 
         if (translator._errorListener._errorInLexer)

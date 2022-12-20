@@ -1,27 +1,17 @@
 import com.parsing.utils.SymbolsTable;
 import com.parsing.GCLGrammarParser;
-import com.parsing.GCLGrammarParser.ExpContext;
-import com.parsing.GCLGrammarParser.ThenContext;
 import com.parsing.GCLGrammarLexer;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.ListIterator;
 import java.util.Stack;
-import java.util.Map.Entry;
-import java.nio.file.SecureDirectoryStream;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 
-import org.antlr.runtime.ParserRuleReturnScope;
-import org.antlr.runtime.tree.ParseTree;
+import org.antlr.runtime.Token;
 import org.antlr.v4.runtime.CommonTokenFactory;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
@@ -208,6 +198,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         }
 
         return null;
+    }
+
+
+    private TerminalNode createTerminal(int tok, String string) {
+        return  new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(tok, string));
     }
 
 
@@ -911,13 +906,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, root.invokingState);
         GCLGrammarParser.NotExpContext notDo0G = new GCLGrammarParser.NotExpContext(new GCLGrammarParser.ExpContext());
 
-        skipDmmy.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkSkip, "skip")));
+        skipDmmy.addChild(createTerminal(GCLGrammarLexer.TkSkip, "skip"));
 
         do0Root.addChild(thenCpy);  // agregamos then al if
         thenCpy.removeLastChild();  // quitamos inst | seq
         thenCpy.addChild(skipDmmy); // agregamos la instruccion de skip
             
-        notDo0G.addAnyChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkNot, "!")));
+        notDo0G.addAnyChild(createTerminal(GCLGrammarLexer.TkNot, "!"));
         notDo0G.addChild(thenCpy.exp()); //negamos la cond original
         thenCpy.children.set(0, notDo0G); // reemplazamos la condicion.
 
@@ -927,9 +922,9 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
     private GCLGrammarParser.IfOpContext generarIfDummy(int invkState) {
         GCLGrammarParser.IfOpContext ifRoot = new GCLGrammarParser.IfOpContext(null, invkState);
-        ifRoot.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkIf, "if")));
+        ifRoot.addChild(createTerminal(GCLGrammarLexer.TkIf, "if"));
         ifRoot.addChild((RuleContext)null);
-        ifRoot.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkFi, "fi")));
+        ifRoot.addChild(createTerminal(GCLGrammarLexer.TkFi, "fi"));
 
         return ifRoot;
     }
@@ -1019,14 +1014,14 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             if (condExp == null) {
                 condExp = new GCLGrammarParser.OrExpContext(new GCLGrammarParser.ExpContext());
                 condExp.addChild(conds.poll());
-                condExp.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkOr, "/\\")));
+                condExp.addChild(createTerminal(GCLGrammarLexer.TkOr, "/\\"));
                 condExp.addChild(conds.poll());
                 continue;
             }
 
             GCLGrammarParser.OrExpContext tmp = new GCLGrammarParser.OrExpContext(new GCLGrammarParser.ExpContext());
             tmp.addChild(condExp);
-            tmp.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkOr, "/\\")));
+            tmp.addChild(createTerminal(GCLGrammarLexer.TkOr, "/\\"));
             tmp.addChild(conds.poll());
             condExp = tmp;
         }
@@ -1041,7 +1036,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
         GCLGrammarParser.ThenContext then = new GCLGrammarParser.ThenContext(null, doRoot.invokingState);
         then.addChild(condExp);
-        then.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkArrow, "-->")));
+        then.addChild(createTerminal(GCLGrammarLexer.TkArrow, "-->"));
         then.addChild(thenInst);
         
         GCLGrammarParser.DoOpContext finalDo = new GCLGrammarParser.DoOpContext(null, doRoot.invokingState);

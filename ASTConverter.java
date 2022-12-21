@@ -9,7 +9,6 @@ import java.util.ListIterator;
 import java.util.Stack;
 import java.util.ArrayDeque;
 
-import org.antlr.runtime.Token;
 import org.antlr.v4.runtime.CommonTokenFactory;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -67,6 +66,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private int _idNum = 0;
     private Stack<SymbolsTable> _idNames = new Stack<SymbolsTable>();   //x1,x2....xi
     private Stack<SymbolsTable> _idMTypes = new Stack<SymbolsTable>();  //Z,B,Z^[1..3]...
+
+    private ASTCopy _copier = new ASTCopy();
 
     /**
      * Revisa si un simbolo se encuentra en alguna declaracion de for
@@ -769,64 +770,205 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    private GCLGrammarParser.DeclarationBlockContext generarDeclBlockFor(GCLGrammarParser.InContext root) {
+        GCLGrammarParser.DeclarationBlockContext dBlock = new GCLGrammarParser.DeclarationBlockContext(null, 0);
+        GCLGrammarParser.DeclContext decl = new GCLGrammarParser.DeclContext(null, 0);
+        GCLGrammarParser.LdecContext ldecl = new GCLGrammarParser.LdecContext(null, 0);
+
+        TerminalNode idNode = (TerminalNode)_copier.visit(root.TkId());
+        TerminalNode intNode = createTerminal(GCLGrammarLexer.TkInt, "int");
+        TerminalNode twoPNde = createTerminal(GCLGrammarLexer.TkTwoPoints, ":");
+        GCLGrammarParser.TypeContext type = new GCLGrammarParser.TypeContext(null, 0);
+
+        dBlock.addChild(decl);
+        decl.parent = dBlock;
+
+        decl.addChild(ldecl);
+        ldecl.parent = decl;
+
+        type.addChild(intNode);
+        intNode.setParent(type);
+        
+        ldecl.addChild(idNode);
+        idNode.setParent(ldecl);
+        ldecl.addChild(twoPNde);
+        twoPNde.setParent(ldecl);
+        ldecl.addChild(type);
+        type.parent = ldecl;
+
+        return dBlock;
+    }
+
+
+    private GCLGrammarParser.ExpContext[] obtenerBoundsFor(GCLGrammarParser.ToContext root) {
+        return new GCLGrammarParser.ExpContext[] {
+            (GCLGrammarParser.ExpContext)_copier.visit(root.exp(0)), // lower bound
+            (GCLGrammarParser.ExpContext)_copier.visit(root.exp(1)), // high bound
+        };
+    }
+
+
+    private GCLGrammarParser.OrdExpContext generarCondFor(TerminalNode id, GCLGrammarParser.ExpContext highB) {
+        TerminalNode idCpy = (TerminalNode)_copier.visit(id);
+        GCLGrammarParser.ExpContext expCpy = (GCLGrammarParser.ExpContext)_copier.visit(highB);
+        GCLGrammarParser.OrdExpContext cond = new GCLGrammarParser.OrdExpContext(new GCLGrammarParser.ExpContext());
+        GCLGrammarParser.IdExpContext idExp = new GCLGrammarParser.IdExpContext(new GCLGrammarParser.ExpContext()); 
+        idExp.addChild(idCpy);
+        idCpy.setParent(idExp);
+
+        cond.addChild(idExp);
+        idExp.parent = cond;
+
+        cond.addChild(createTerminal(GCLGrammarLexer.TkLeq, "<="));
+        cond.op = ((TerminalNode)cond.children.get(1)).getSymbol();
+
+        cond.addChild(expCpy);
+        expCpy.setParent(cond);
+        
+        return cond;
+    }
+
+
+    private GCLGrammarParser.AsignationContext[] generarAsignsFor(TerminalNode id, GCLGrammarParser.ExpContext lowB) {
+        GCLGrammarParser.AsignationContext lowAsign = new GCLGrammarParser.AsignationContext(null, 0);
+        GCLGrammarParser.AsignableContext lowAsignable = new GCLGrammarParser.AsignableContext(null, 0);
+        GCLGrammarParser.ExpContext lowCpy = (GCLGrammarParser.ExpContext)_copier.visit(lowB);
+
+        lowAsignable.addChild(lowCpy);
+        lowCpy.parent = lowAsignable;
+
+        lowAsign.addChild((TerminalNode)_copier.visit(id));
+        lowAsign.addChild(createTerminal(GCLGrammarLexer.TkAsig, ":="));
+        lowAsign.addChild(lowAsignable);
+        lowAsignable.parent = lowAsign;
+
+        GCLGrammarParser.AsignationContext countAsign = new GCLGrammarParser.AsignationContext(null, 0);
+        GCLGrammarParser.AsignableContext countAsignable = new GCLGrammarParser.AsignableContext(null, 0);
+
+        GCLGrammarParser.MinPlusExpContext sumExp = new GCLGrammarParser.MinPlusExpContext(new GCLGrammarParser.ExpContext());
+        GCLGrammarParser.IdExpContext idExp = new GCLGrammarParser.IdExpContext(new GCLGrammarParser.ExpContext());
+        GCLGrammarParser.NumExpContext oneExp = new GCLGrammarParser.NumExpContext(new GCLGrammarParser.ExpContext());
+        
+        idExp.addChild((TerminalNode)_copier.visit(id));
+        oneExp.addChild(createTerminal(GCLGrammarParser.TkNum, "1"));
+
+        sumExp.addChild(idExp);
+        sumExp.addChild(createTerminal(GCLGrammarLexer.TkPlus, "+"));
+        sumExp.addChild(oneExp);
+        sumExp.op = ((TerminalNode)sumExp.children.get(1)).getSymbol();
+
+        idExp.parent = sumExp;
+        oneExp.parent = oneExp;
+
+        countAsignable.addChild(sumExp);
+        countAsign.addChild((TerminalNode)_copier.visit(id));
+        countAsign.addChild(createTerminal(GCLGrammarLexer.TkAsig, ":="));
+        countAsign.addChild(countAsignable);
+        
+        return new GCLGrammarParser.AsignationContext[] {
+            lowAsign,
+            countAsign
+        };
+    }
+
+
+    private GCLGrammarParser.DoOpContext generarDoFor(
+        GCLGrammarParser.OrdExpContext cond, 
+        GCLGrammarParser.AsignationContext intAsig,
+        GCLGrammarParser.InstContext inst,
+        GCLGrammarParser.SeqContext seq) {
+
+        if ((seq == null && inst == null) || (inst != null && seq != null))
+            return null; // crasheate realmente.
+        
+        GCLGrammarParser.DoOpContext doOp = new GCLGrammarParser.DoOpContext(null, 0);
+        GCLGrammarParser.ThenContext then = new GCLGrammarParser.ThenContext(null, 0);
+        GCLGrammarParser.SeqContext doSeq = new GCLGrammarParser.SeqContext(null, 0);
+        doSeq.addChild((inst != null ? inst : seq));
+        doSeq.addChild(createTerminal(GCLGrammarLexer.TkSemicolon, ";"));
+        doSeq.addChild(intAsig);
+
+        then.addChild(cond);
+        then.addChild(createTerminal(GCLGrammarLexer.TkArrow, "-->"));
+        then.addChild(doSeq);
+
+        doOp.addChild(then);
+        return doOp;
+    }
+
+
     @Override
     public String visitForOp(GCLGrammarParser.ForOpContext ctx)
     {
-        _forStack.pop();
-        return visitChildren(ctx);
+        GCLGrammarParser.BlockContext block = new GCLGrammarParser.BlockContext(null, 0);
+        SymbolsTable forTable = new SymbolsTable(_symbolStack.peek());
+        TerminalNode forId = ctx.in().TkId();
+
+        forTable.addSymbol(forId.getText(), "int");
+        block.symbols = forTable;
+
+        GCLGrammarParser.DeclarationBlockContext declBlock = generarDeclBlockFor(ctx.in()); // bien en teoria
+        GCLGrammarParser.ExpContext[] bounds = obtenerBoundsFor(ctx.in().to()); // bien en teoria
+        GCLGrammarParser.OrdExpContext doCond = generarCondFor(forId, bounds[1]); // bien pero cuidado con null.
+        GCLGrammarParser.AsignationContext[] asignations = generarAsignsFor(forId, bounds[0]); // bien en teorio
+        GCLGrammarParser.SeqContext extSeq = new GCLGrammarParser.SeqContext(null, 0);
+
+        GCLGrammarParser.InstContext intDoInst = (ctx.inst() != null ? (GCLGrammarParser.InstContext)_copier.visit(ctx.inst()) : null);
+        GCLGrammarParser.SeqContext intDoSeq = (ctx.seq() != null ? (GCLGrammarParser.SeqContext)_copier.visit(ctx.seq()) : null);
+        GCLGrammarParser.DoOpContext doOp = generarDoFor(doCond, asignations[1], intDoInst, intDoSeq);
+
+        extSeq.addChild(asignations[0]);
+        extSeq.addChild(createTerminal(GCLGrammarParser.TkSemicolon, ";"));
+        extSeq.addChild(doOp);
+
+        block.addChild(createTerminal(GCLGrammarParser.TkOBlock, "|["));
+        block.addChild(declBlock);
+        block.addChild(extSeq);
+        block.addChild(createTerminal(GCLGrammarParser.TkCBlock, "]|"));
+
+        return visit(block);
     }
 
 
     @Override
     public String visitIn(GCLGrammarParser.InContext ctx)
     {
-        //StringBuilder pref = generatePrefix(_currRealDepth++).append("In");
-        //System.out.println(pref.toString());
-//
-//
-        String id = ctx.TkId().getText();
-        _forStack.push(id);
-        //pref = generatePrefix(_currRealDepth).append("Ident: " + id + " | type: int");
-        //System.out.println(pref);
-//
-        //visitChildren(ctx);
-        //_currRealDepth--;
-        return visitChildren(ctx);
+        return "";
     }
 
 
     @Override
     public String visitTo(GCLGrammarParser.ToContext ctx)
     {
-        return visitChildren(ctx);
+        return "";
     }
 
 
     @Override
     public String visitPrinteable(GCLGrammarParser.PrinteableContext ctx)
     {
-        return visitChildren(ctx);
+        return "";
     }
 
 
     @Override
     public String visitPrint(GCLGrammarParser.PrintContext ctx)
     {
-        return visitChildren(ctx);
+        return "";
     }
 
 
     @Override
     public String visitConcatenable(GCLGrammarParser.ConcatenableContext ctx)
     {
-        return visitChildren(ctx);
+        return "";
     }
 
 
     @Override
     public String visitConcatenation(GCLGrammarParser.ConcatenationContext ctx)
     {
-        return visitChildren(ctx);
+        return "";
     }
 
 
@@ -885,25 +1027,22 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
-    //@Override
-    //public String[] visitGuard(GCLGrammarParser.GuardContext ctx)
-    //{
-    //    return visitChildren(ctx);
-    //}
+    @Override
+    public String visitGuard(GCLGrammarParser.GuardContext ctx) {
+        return null;
+    }
 
 
-    //@Override
-    //public String visitThen(GCLGrammarParser.ThenContext ctx)
-    //{
-    //    return visitChildren(ctx);
-    //}
+    @Override
+    public String visitThen(GCLGrammarParser.ThenContext ctx) {
+        return null;
+    }
 
 
     private String generarDo0(GCLGrammarParser.ThenContext root) {
-        ASTCopy copier = new ASTCopy();
-        GCLGrammarParser.ThenContext thenCpy = (GCLGrammarParser.ThenContext)copier.visit(root);
-        GCLGrammarParser.IfOpContext do0Root = new GCLGrammarParser.IfOpContext(null, root.invokingState);
-        GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, root.invokingState);
+        GCLGrammarParser.ThenContext thenCpy = (GCLGrammarParser.ThenContext)_copier.visit(root);
+        GCLGrammarParser.IfOpContext do0Root = new GCLGrammarParser.IfOpContext(null, 0);
+        GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, 0);
         GCLGrammarParser.NotExpContext notDo0G = new GCLGrammarParser.NotExpContext(new GCLGrammarParser.ExpContext());
 
         skipDmmy.addChild(createTerminal(GCLGrammarLexer.TkSkip, "skip"));
@@ -931,39 +1070,39 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
 
     private String generarDoIfSing(GCLGrammarParser.ThenContext root) {
-        ASTCopy copier = new ASTCopy();
+        
 
-        GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, root.invokingState);
-        skipDmmy.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkSkip, "skip")));
+        GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, 0);
+        skipDmmy.addChild(createTerminal(GCLGrammarLexer.TkSkip, "skip"));
 
         GCLGrammarParser.IfOpContext ifRoot = generarIfDummy(root.invokingState);
-        GCLGrammarParser.GuardContext ifGuard = new GCLGrammarParser.GuardContext(null, root.invokingState);
-        GCLGrammarParser.ThenContext topThen = new GCLGrammarParser.ThenContext(null, root.invokingState);
-        GCLGrammarParser.ThenContext botThen = new GCLGrammarParser.ThenContext(null, root.invokingState);
+        GCLGrammarParser.GuardContext ifGuard = new GCLGrammarParser.GuardContext(null, 0);
+        GCLGrammarParser.ThenContext topThen = new GCLGrammarParser.ThenContext(null, 0);
+        GCLGrammarParser.ThenContext botThen = new GCLGrammarParser.ThenContext(null, 0);
 
-        GCLGrammarParser.ExpContext condCpy1 = (GCLGrammarParser.ExpContext)copier.visit(root.exp());
-        GCLGrammarParser.ExpContext condCpy2 = (GCLGrammarParser.ExpContext)copier.visit(root.exp());
+        GCLGrammarParser.ExpContext condCpy1 = (GCLGrammarParser.ExpContext)_copier.visit(root.exp());
+        GCLGrammarParser.ExpContext condCpy2 = (GCLGrammarParser.ExpContext)_copier.visit(root.exp());
         GCLGrammarParser.NotExpContext notCond = new GCLGrammarParser.NotExpContext(new GCLGrammarParser.ExpContext());
 
-        notCond.addAnyChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkNot, "!"))); 
+        notCond.addAnyChild(createTerminal(GCLGrammarLexer.TkNot, "!")); 
         notCond.addChild(condCpy2); // negamos cond
         
         topThen.addChild(condCpy1);     // then cond no negada
         botThen.addChild(notCond);      // then cond negada
         
-        topThen.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkArrow, "-->")));
-        botThen.addChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkArrow, "-->")));
+        topThen.addChild(createTerminal(GCLGrammarLexer.TkArrow, "-->"));
+        botThen.addChild(createTerminal(GCLGrammarLexer.TkArrow, "-->"));
 
         if (root.inst() != null)
-            topThen.addChild((GCLGrammarParser.InstContext)copier.visit(root.inst())); // instruccion al then top
+            topThen.addChild((GCLGrammarParser.InstContext)_copier.visit(root.inst())); // instruccion al then top
         else
-            topThen.addChild((GCLGrammarParser.SeqContext)copier.visit(root.seq()));  // seq al then top
+            topThen.addChild((GCLGrammarParser.SeqContext)_copier.visit(root.seq()));  // seq al then top
         
         botThen.addChild(skipDmmy); // skip a la negada
 
         // creamos la guardia
         ifGuard.addChild(topThen);
-        ifGuard.addAnyChild(new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(GCLGrammarLexer.TkGuard, "[]")));
+        ifGuard.addAnyChild(createTerminal(GCLGrammarLexer.TkGuard, "[]"));
         ifGuard.addChild(botThen);
 
         // padre de la guardia + actualizamos la guardia del if
@@ -975,8 +1114,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
 
     private GCLGrammarParser.IfOpContext generarDoIfMult(GCLGrammarParser.GuardContext gIni) {
-        ASTCopy copier = new ASTCopy();
-        GCLGrammarParser.GuardContext gcpy = (GCLGrammarParser.GuardContext)copier.visit(gIni);
+        
+        GCLGrammarParser.GuardContext gcpy = (GCLGrammarParser.GuardContext)_copier.visit(gIni);
         GCLGrammarParser.IfOpContext ifRes = generarIfDummy(gIni.parent.invokingState);
         ifRes.children.set(1, gcpy);
         gcpy.setParent(ifRes);
@@ -999,9 +1138,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             return conds;
         }
 
-        for (GCLGrammarParser.ThenContext thenC : root.then()) {
+        for (GCLGrammarParser.ThenContext thenC : root.then())
             conds.offer(thenC.exp());
-        }
 
         return conds;
     }
@@ -1031,15 +1169,15 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         System.out.println();
         
         GCLGrammarParser.IfOpContext ifInt = generarDoIfMult(doRoot.guard());
-        GCLGrammarParser.InstContext thenInst = new GCLGrammarParser.InstContext(null, doRoot.invokingState);
+        GCLGrammarParser.InstContext thenInst = new GCLGrammarParser.InstContext(null, 0);
         thenInst.addChild(ifInt);
 
-        GCLGrammarParser.ThenContext then = new GCLGrammarParser.ThenContext(null, doRoot.invokingState);
+        GCLGrammarParser.ThenContext then = new GCLGrammarParser.ThenContext(null, 0);
         then.addChild(condExp);
         then.addChild(createTerminal(GCLGrammarLexer.TkArrow, "-->"));
         then.addChild(thenInst);
         
-        GCLGrammarParser.DoOpContext finalDo = new GCLGrammarParser.DoOpContext(null, doRoot.invokingState);
+        GCLGrammarParser.DoOpContext finalDo = new GCLGrammarParser.DoOpContext(null, 0);
         finalDo.addChild(then); // deberiamos agregar los tokens pero no nos interesa.
         return visit(finalDo);
     }
@@ -1059,7 +1197,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             System.out.println("ifDo");
             System.out.println(ifDo);
             System.out.println();
-            return visitChildren(ctx);
+            return ""; // COSO FINAL RETORNAR ACA
         }
 
         return generarDoMultiple(ctx);

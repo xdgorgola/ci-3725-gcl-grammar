@@ -387,7 +387,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitNumericLit(GCLGrammarParser.NumericLitContext ctx)
     {
-        return visitChildren(ctx);
+        return "";
     }
 
 
@@ -635,11 +635,8 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitBoolExp(GCLGrammarParser.BoolExpContext ctx)
     {
-        StringBuilder trad = new StringBuilder("(")
-            .append((Boolean.parseBoolean(ctx.getText())? TRUE_STR_CODE : FALSE_STR_CODE))
-            .append(")");
-
-        return trad.toString();
+        return String.format("(%s)", 
+            (Boolean.parseBoolean(ctx.getText())? TRUE_STR_CODE : FALSE_STR_CODE));
     }
 
 
@@ -698,19 +695,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     public String visitAsignation(GCLGrammarParser.AsignationContext ctx)
     {
         String matId = getSymbolMID(ctx.TkId().getText());
-        if (ctx.asignable() != null) {
-            //System.out.println(generarEspacioAsignacion(matId, visit(ctx.asignable())));
-            //System.out.println();
+        if (ctx.asignable() != null)
             return generarEspacioAsignacion(matId, visit(ctx.asignable()));
-        }
 
         Pattern p = Pattern.compile("-*[0-9]+");
         Matcher match = p.matcher(lookSymbolType(ctx.TkId().getText()));
         match.find(); match.find();
-        
-        //System.out.println(match.group());
-        //System.out.println(generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group()))));
-        //System.out.println();
+         
         return generarEspacioAsignacion(matId, visitArrayInit(ctx.arrayInit(), Integer.parseInt(match.group())));
     }
 
@@ -933,14 +924,14 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     @Override
     public String visitIn(GCLGrammarParser.InContext ctx)
     {
-        return "";
+        return null;
     }
 
 
     @Override
     public String visitTo(GCLGrammarParser.ToContext ctx)
     {
-        return "";
+        return null;
     }
 
 

@@ -1,7 +1,20 @@
 |[
    declare
       x : int
-   skip;
-   skip;
-   skip
+
+   |[
+      declare
+         y : int
+      |[
+         declare
+            z : int
+         skip
+      ]|;
+      |[
+         declare
+            z : int
+         skip
+      ]|;
+      skip
+   ]|
 ]|

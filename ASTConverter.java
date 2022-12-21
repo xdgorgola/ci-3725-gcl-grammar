@@ -27,16 +27,22 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private static final String NOT_STR_CODE = "c_{7}";
     private static final String TRUE_STR_CODE = "c_{8}";
     private static final String FALSE_STR_CODE = "c_{9}";
+    private static final String FOR_ALL_STR_CODE = "c_{12}";
     private static final String EXIST_OCON_STR_CODE = "c_{13}";
+    private static final String EXIST_STR_CODE = "c_{14}";
     private static final String INT_EQ_STR_CODE = "c_{15}";
+    private static final String IN_STR_CODE = "c_{16}";
+    private static final String NIN_STR_CODE = "c_{17}";
     private static final String SET_COMP_STR_CODE = "c_{19}";
     private static final String CURLY_STR_CODE = "c_{20}";
     private static final String COMMA_STR_CODE = "c_{21}";
+    private static final String BIG_UNION_STR_CODE = "c_{22}";
     private static final String SMALL_UNION_STR_CODE = "c_{24}";
     private static final String PAR_ORD_STR_CODE = "c_{31}";
     private static final String CROSS_STR_CODE = "c_{32}";
     private static final String TUPL_STR_CODE = "c_{33}";
     private static final String SEQ_STR_CODE = "c_{34}";
+    private static final String UNIV_STR_CODE = "c_{35}";
     private static final String INT_STR_CODE = "c_{36}";
     private static final String BOOL_STR_CODE = "c_{37}";
     private static final String POW_STR_CODE = "c_{38}";
@@ -50,17 +56,20 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private static final String WRITEA_STR_CODE = "c_{58}";
     private static final String ARR_RANG_STR_CODE = "c_{59}";
     private static final String MIN_STR_CODE = "c_{60}";
+    private static final String DOM_STR_CODE = "c_{61}";
     private static final String INT_NEQ_STR_CODE = "c_{62}";
     private static final String LESS_STR_CODE = "c_{63}";
     private static final String LEQ_STR_CODE = "c_{64}";
     private static final String GREATER_STR_CODE = "c_{65}";
     private static final String GEQ_STR_CODE = "c_{66}";
+    private static final String PI_STR_CODE = "c_{67}";
     private static final String ABT_ABT_STR_CODE = "(c_{20} (c_{31} c_{40} c_{40}))";
     private static final String LAMBDA_STR_CODE = "\\lambda";
 
     // Tablas de simbolos
     private Stack<SymbolsTable> _symbolStack = new Stack<SymbolsTable>();
     private Stack<String> _forStack = new Stack<String>();
+    private boolean _firstBlock = true;
 
     // Usamos stack en vez de ArrayDeque para recorrer el iterator de bottom to top
     private int _idNum = 0;
@@ -200,7 +209,10 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
         return null;
     }
-
+    
+    private Integer calculateProjections() {
+        return 0;
+    }
 
     private TerminalNode createTerminal(int tok, String string) {
         return  new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(tok, string));
@@ -330,14 +342,37 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         _symbolStack.add(ctx.symbols);
         if (ctx.declarationBlock() != null)
             visit(ctx.declarationBlock());
+        
+        boolean prevFirst = _firstBlock;
+        if (_firstBlock)
+            _firstBlock = false;
 
-        String res = visit(ctx.inst() != null ? ctx.inst() : ctx.seq());
+        String semInsts = visit(ctx.inst() != null ? ctx.inst() : ctx.seq());
+        String semBlock = semInsts;
+        StringBuilder projStr = new StringBuilder("");
+
+
+        if (!prevFirst && ctx.symbols.size() > 0){
+            projStr.append(String.format("(%s %s ", SEQ_STR_CODE, semInsts));
+            for (int i = 0; i < ctx.symbols.size(); ++i)
+            {
+                if (i == ctx.symbols.size() - 1) {
+                    projStr.append(String.format("%s", PI_STR_CODE));
+                    continue;
+                }
+                projStr.append(String.format("(%s %s ", SEQ_STR_CODE, PI_STR_CODE));
+            }
+            for (int i = 0; i < ctx.symbols.size(); ++i) // agregamos ctx.symbols.size() - 1 + 1 extra del inicio
+                projStr.append(")");
+            
+            semBlock = projStr.toString();
+        }
 
         _symbolStack.pop();
         _idMTypes.pop();
         _idNames.pop();
         _idNum -= ctx.symbols.size();
-        return res;
+        return semBlock;
     }
 
 
@@ -407,6 +442,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
         return String.format("(%s)", trad.toString());
     }
+
 
     @Override
     public String visitUnMinExp(GCLGrammarParser.UnMinExpContext ctx)
@@ -1174,6 +1210,82 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    private String DFunction(String arg) {
+        return String.format("(%s %s (%s %s))", NUM_STR_CODE, 
+            "x_{68}", TUPL_STR_CODE, arg);
+    }
+
+
+    private String doInternalForAll(String do0, String doIf) {
+        String range = String.format("(%s (%s %s %s) (%s %s %s))", AND_STR_CODE, LEQ_STR_CODE, 
+        "x_{109}", "c_{42}", LEQ_STR_CODE, "x_{105}", "c_{42}");
+
+        String leftOr = String.format("(%s (%s %s %s) (%s %s %s))", AND_STR_CODE, INT_EQ_STR_CODE, 
+            do0, DFunction("(x_{109})"), INT_EQ_STR_CODE, "c_{42}", "x_{109}");
+
+        String rightOr = String.format("(%s (%s %s (%s %s %s)) (%s %s %s))", AND_STR_CODE, SEQ_STR_CODE, doIf, INT_EQ_STR_CODE, 
+            DFunction("(c_{56} c_{43} x_{109})"), DFunction("(x_{109})"), GREATER_STR_CODE, "c_{42}", "x_{109}");
+
+        return String.format("(%s (%s x_{109} . (%s %s %s)) (%s x_{109} . %s))", FOR_ALL_STR_CODE, LAMBDA_STR_CODE,
+            OR_STR_CODE, rightOr, leftOr, LAMBDA_STR_CODE, range);
+    }
+
+
+    private String doInternalDFuncExist(String forAll) {
+        String extSpace = generarEspacioExt();
+        String range = String.format("(%s (%s (%s %s %s) (%s %s %s)) x_{68})", IN_STR_CODE, POW_STR_CODE, ARR_RANG_STR_CODE,
+        "x_{105}", "c_{42}", POW_STR_CODE, extSpace, extSpace);
+
+        String andSeqLeft = String.format("(%s (%s x_{68} (%s x_{105})) x_{67})", INT_EQ_STR_CODE, NUM_STR_CODE, TUPL_STR_CODE);
+        String idSet = String.format("(%s (%s (%s x_{120} . %s (%s %s (%s (%s %s))) %s) (%s x_{120} . %s)))", IDENT_STR_CODE, 
+        SET_COMP_STR_CODE, LAMBDA_STR_CODE, NIN_STR_CODE, NUM_STR_CODE, DFunction("x_{105}"), TUPL_STR_CODE, CURLY_STR_CODE, 
+        "x_{120}", ABORT_STR_CODE, LAMBDA_STR_CODE, generarTuplaEspacio());
+        
+        String andRight = String.format("(%s (%s (%s %s %s)) %s)", SEQ_STR_CODE, TUPL_STR_CODE, SMALL_UNION_STR_CODE, 
+            ABT_ABT_STR_CODE, idSet, andSeqLeft);
+        
+        String and = String.format("(%s %s %s)", AND_STR_CODE, andRight, forAll);
+        //System.out.println(String.format("(%s (%s x_{68} . %s) (%s x_{68} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, and, LAMBDA_STR_CODE, range));
+        return String.format("(%s (%s x_{68} . %s) (%s x_{68} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, and, LAMBDA_STR_CODE, range);
+    }
+
+
+    private String doInternalSetComp(String dExist) {
+        String iExist = String.format("(%s (%s x_{105} . %s) (%s x_{105} . (%s %s %s)))", EXIST_STR_CODE, LAMBDA_STR_CODE, dExist,
+            LAMBDA_STR_CODE, GEQ_STR_CODE, "c_{42}", "x_{105}");
+        
+        String espExt = generarEspacioExt();
+        String setLeft = String.format("(%s (%s %s %s))", UNIV_STR_CODE, CROSS_STR_CODE, espExt, espExt);
+
+        return String.format("(%s (%s x_{67} . %s) (%s x_{67} . %s))", SET_COMP_STR_CODE, LAMBDA_STR_CODE, iExist,
+            LAMBDA_STR_CODE, setLeft);
+    }
+
+
+    private String doShallowExist(String intSet) {
+        String range = String.format("(%s (%s %s) %s)", INT_EQ_STR_CODE, BIG_UNION_STR_CODE, intSet, "x_{121}");
+
+        String leftPart = String.format("(%s (%s (%s (%s %s) (%s (%s %s))) (%s)) (%s))", IN_STR_CODE, SMALL_UNION_STR_CODE, CROSS_STR_CODE,
+            CURLY_STR_CODE, ABORT_STR_CODE, COMP_POW_STR_CODE, DOM_STR_CODE, "x_{121}", "x_{121}", "x_{122}");
+
+        //System.out.println(String.format("(%s (%s x_{121} . %s) (%s x_{121} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, leftPart, LAMBDA_STR_CODE, range));
+        return String.format("(%s (%s x_{121} . %s) (%s x_{121} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, leftPart, LAMBDA_STR_CODE, range);
+
+    }
+
+    private String generarDoFinal(String do0, String doIf) 
+    {
+        String intForAll = doInternalForAll(do0, doIf);
+        String intSet = doInternalSetComp(doInternalDFuncExist(intForAll));
+        String shallowEx = doShallowExist(intSet);
+
+        String espExt = generarEspacioExt();
+        
+        return String.format("(%s (%s x_{122} . %s) (%s x_{122} . (%s %s %s)))", SET_COMP_STR_CODE, LAMBDA_STR_CODE, shallowEx,
+        LAMBDA_STR_CODE, CROSS_STR_CODE, espExt, espExt);
+    }
+
+
     @Override
     public String visitDoOp(GCLGrammarParser.DoOpContext ctx)
     {
@@ -1182,13 +1294,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             String do0 = generarDo0(ctx.then());
             String ifDo = generarDoIfSing(ctx.then());
 
-            System.out.println("do0");
-            System.out.println(do0);
-            System.out.println();
-            System.out.println("ifDo");
-            System.out.println(ifDo);
-            System.out.println();
-            return ""; // COSO FINAL RETORNAR ACA
+            return generarDoFinal(do0, ifDo);
         }
 
         return generarDoMultiple(ctx);

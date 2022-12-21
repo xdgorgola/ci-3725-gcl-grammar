@@ -50,7 +50,6 @@ public class GCL {
         
         ASTTypeChecker typeVisitor = new ASTTypeChecker(false);
         typeVisitor.visit(root);
-        System.out.println("final");
         System.out.println(conv.visit(root));
     }
     

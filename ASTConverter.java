@@ -15,11 +15,11 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 /** 
- * Clase que se encarga de visitar cada uno de los nodos del arbol sintactico abstracto generado
- * y hacer chequeo de tipos
+ * Clase encarga de recorrer el AST generado y convertirlo a lenguaje aplicativo 
  */
 public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     
+    // Codigos aplicativos de latex
     private static final String BOOL_EQ_STR_CODE = "c_{1}";
     private static final String OR_STR_CODE = "c_{4}";
     private static final String AND_STR_CODE = "c_{5}";
@@ -76,6 +76,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     private Stack<SymbolsTable> _idNames = new Stack<SymbolsTable>();   //x1,x2....xi
     private Stack<SymbolsTable> _idMTypes = new Stack<SymbolsTable>();  //Z,B,Z^[1..3]...
 
+    // Copiador
     private ASTCopy _copier = new ASTCopy();
 
     /**
@@ -112,6 +113,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera un numero en codigo aplicativo
+     * @param number Numero a transformar
+     * @return Codigo del numero a transformar
+     */
     private String numberToCode(int number) {
         Stack<String> tmp = new Stack<String>();
         StringBuilder res = new StringBuilder();
@@ -157,10 +163,22 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera codigo para hacer una lectura de array
+     * @param arrName Nombre del array
+     * @param index Indice a acceder
+     * @return Codigo de acceso a array
+     */
     private String arrayReadCode(String arrName, String index) {
         return String.format("(%s %s)", arrName, index);
     }
 
+    
+    /**
+     * Convierte un tipo de GCL a codigo aplicativo
+     * @param type Tipo a generar
+     * @return Codigo resultante
+     */
     private String typeToCode(String type) {
         switch (type) {
             case "int":
@@ -191,6 +209,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Declara una variable. Se usa para guardarlas en una tabla de ID a 
+     * variable matematica asociada y de ID a tipo matematico.
+     * @param id ID a convertir
+     * @param type Tipo de la id
+     */
     private void declareVar(String id, String type) {
         SymbolsTable nId = _idNames.peek();
         SymbolsTable nType = _idMTypes.peek();
@@ -201,6 +225,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Consigue el simbolo matematico de un simbolo
+     * @param symb ID a conseguir
+     * @return Resultado
+     */
     private String getSymbolMID(String symb) {
         for (SymbolsTable cur = _idNames.peek(); cur != null; cur = cur.getPreviousTable()) {
             if (cur.isSymbolInTable(symb))
@@ -209,26 +238,47 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
         return null;
     }
+
     
-    private Integer calculateProjections() {
-        return 0;
-    }
-
+    /**
+     * Crea un nodo terminal.
+     * @param tok ID del token a crear.
+     * @param string String del token
+     * @return Nodo terminal que representa al token
+     */
     private TerminalNode createTerminal(int tok, String string) {
-        return  new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(tok, string));
+        return new TerminalNodeImpl(CommonTokenFactory.DEFAULT.create(tok, string));
     }
 
 
+    /**
+     * Genera codigo para variables separadas por coma
+     * @param a1 Argumento 1
+     * @param a2 Argumento 2
+     * @return Codigo resultado
+     */
     private String commaSeparateCode(String a1, String a2) {
         return String.format("%s %s %s", COMMA_STR_CODE, a2, a1);    
     }
 
 
+    /**
+     * Genera codigo para variables separadas por producto cruz
+     * @param a1 Argumento 1
+     * @param a2 Argumento 2
+     * @return Codigo resultado
+     */
     private String crossProductCode(String a1, String a2) {
         return String.format("%s %s %s", CROSS_STR_CODE, a2, a1);
     }
 
 
+    /**
+     * Genera tupla par de espacio actual
+     * @param symb Simbolo que se modifica (asginacion)
+     * @param exp Expresion del simbolo (asignacion)
+     * @return Codigo del espacio actual
+     */
     private String generarParEspacio(String symb, String exp) {
         StringBuilder names = new StringBuilder(TUPL_STR_CODE + " (");
         StringBuilder exps = new StringBuilder(TUPL_STR_CODE + " (");
@@ -255,7 +305,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             }
         }
 
-        // checar nro parentesis
         for (int p = 0; p < parCount; ++p) {
             names.append(")");
             exps.append(")");
@@ -265,6 +314,10 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
     
+    /**
+     * Genera una tupla representativa del estado actual
+     * @return Codigo de la tupla
+     */
     private String generarTuplaEspacio() {
         StringBuilder cruz = new StringBuilder("");
         SymbolsTable cur = null;
@@ -296,18 +349,32 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera el espacio extendido
+     * @return Codigo
+     */
     private String generarEspacioExt() {
         return String.format("(%s (%s %s) %s)", 
             SMALL_UNION_STR_CODE, CURLY_STR_CODE, ABORT_STR_CODE, generarTuplaEspacio());
     }
 
 
+    /**
+     * Genera par ordenado de tupla de espacios
+     * @return Codigo
+     */
     private String generarParTipoEspacio() {
         String tupla = generarTuplaEspacio();
         return String.format("(%s)", crossProductCode(tupla, tupla));
     }
 
 
+    /**
+     * Genera sematica de una asignacion
+     * @param symb Simbolo a asignarse
+     * @param exp Expresion a asignarse
+     * @return Codigo
+     */
     private String generarEspacioAsignacion(String symb, String exp) {
         StringBuilder total = new StringBuilder(String.format("%s (%s x_{120} . ", 
             SET_COMP_STR_CODE, LAMBDA_STR_CODE));
@@ -394,13 +461,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
-    /**
-     * Visita nodos de la lista de declaraciones y agrega los simbolos 
-     * a su respectiva tabla
-     * @param ctx parsetree de LdecContext
-     * @param gclType Tipo de los simbolos
-     * @return nada
-     */
     @Override
     public String visitLdec(GCLGrammarParser.LdecContext ctx)
     {
@@ -693,7 +753,7 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     /**
      * Visita un nodo de inicializacion de arreglo
      * @param ctx Contexto de regla ArrayInit
-     * @return nada
+     * @return Codigo
      */
     public String visitArrayInit(GCLGrammarParser.ArrayInitContext ctx, int indice)
     {
@@ -827,6 +887,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Obtiene las expresiones del rango de un for
+     * @param root Raiz To del for
+     * @return Arreglo con expresion mas pequena en indice 0, y la maxima en 1
+     */
     private GCLGrammarParser.ExpContext[] obtenerBoundsFor(GCLGrammarParser.ToContext root) {
         return new GCLGrammarParser.ExpContext[] {
             (GCLGrammarParser.ExpContext)_copier.visit(root.exp(0)), // lower bound
@@ -835,6 +900,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera la condicion del do del for
+     * @param id id declarada en el for
+     * @param highB Bound superior
+     * @return Nodo de la condicion
+     */
     private GCLGrammarParser.OrdExpContext generarCondFor(TerminalNode id, GCLGrammarParser.ExpContext highB) {
         TerminalNode idCpy = (TerminalNode)_copier.visit(id);
         GCLGrammarParser.ExpContext expCpy = (GCLGrammarParser.ExpContext)_copier.visit(highB);
@@ -856,6 +927,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera las asignaciones nuevas del for. La asignacion al lower bound y el 
+     * aumento del contador
+     * @param id ID del for
+     * @param lowB Borde inferior del for
+     * @return Array con asignacion al lower bound en 0 y aumento del contador en 1
+     */
     private GCLGrammarParser.AsignationContext[] generarAsignsFor(TerminalNode id, GCLGrammarParser.ExpContext lowB) {
         GCLGrammarParser.AsignationContext lowAsign = new GCLGrammarParser.AsignationContext(null, 0);
         GCLGrammarParser.AsignableContext lowAsignable = new GCLGrammarParser.AsignableContext(null, 0);
@@ -899,6 +977,14 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera el do del for
+     * @param cond Condicion del do
+     * @param intAsig Asignacion interna
+     * @param inst Instruccion interna del for
+     * @param seq Secuencia interna del for
+     * @return Nodo do resultante
+     */
     private GCLGrammarParser.DoOpContext generarDoFor(
         GCLGrammarParser.OrdExpContext cond, 
         GCLGrammarParser.AsignationContext intAsig,
@@ -1066,6 +1152,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera do0 para un do
+     * @param root nodo con condicion e instruccion del do original
+     * @return Codigo del do0
+     */
     private String generarDo0(GCLGrammarParser.ThenContext root) {
         GCLGrammarParser.ThenContext thenCpy = (GCLGrammarParser.ThenContext)_copier.visit(root);
         GCLGrammarParser.IfOpContext do0Root = new GCLGrammarParser.IfOpContext(null, 0);
@@ -1086,6 +1177,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera un nodo if vacio
+     * @param invkState ignorar
+     * @return Nodo if dummy
+     */
     private GCLGrammarParser.IfOpContext generarIfDummy(int invkState) {
         GCLGrammarParser.IfOpContext ifRoot = new GCLGrammarParser.IfOpContext(null, invkState);
         ifRoot.addChild(createTerminal(GCLGrammarLexer.TkIf, "if"));
@@ -1096,9 +1192,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera codigo de el If cursivo de un Do con solo una guardia
+     * @param root Nodo con condicion e instrucciones internas del do
+     * @return Codigo
+     */
     private String generarDoIfSing(GCLGrammarParser.ThenContext root) {
-        
-
         GCLGrammarParser.InstContext skipDmmy = new GCLGrammarParser.InstContext(null, 0);
         skipDmmy.addChild(createTerminal(GCLGrammarLexer.TkSkip, "skip"));
 
@@ -1140,6 +1239,12 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    
+    /**
+     * Genera codigo de el If cursivo de un Do con varias guardias
+     * @param root Nodo con guardias del do original
+     * @return Codigo
+     */
     private GCLGrammarParser.IfOpContext generarDoIfMult(GCLGrammarParser.GuardContext gIni) {
         
         GCLGrammarParser.GuardContext gcpy = (GCLGrammarParser.GuardContext)_copier.visit(gIni);
@@ -1151,6 +1256,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Extrae las condiciones del do multi guardia en un stack que tiene de tope la primera condicion
+     * @param root Guardia raiz del do
+     * @return Cola con condiciones del do
+     */
     private ArrayDeque<GCLGrammarParser.ExpContext> extractCondsDo(GCLGrammarParser.GuardContext root) {
         ArrayDeque<GCLGrammarParser.ExpContext> conds = new ArrayDeque<GCLGrammarParser.ExpContext>();
 
@@ -1172,6 +1282,11 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
     }
 
 
+    /**
+     * Genera el codigo de un do con multiples guardias
+     * @param doRoot Do a convertir
+     * @return Codigo resultante
+     */
     private String generarDoMultiple(GCLGrammarParser.DoOpContext doRoot) {
         ArrayDeque<GCLGrammarParser.ExpContext> conds = extractCondsDo(doRoot.guard());
         GCLGrammarParser.OrExpContext condExp = null;
@@ -1267,6 +1382,13 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
 
     }
 
+
+    /**
+     * Genera el codigo final de un do
+     * @param do0 do0
+     * @param doIf if cursivo
+     * @return codigo del do
+     */
     private String generarDoFinal(String do0, String doIf) 
     {
         String intForAll = doInternalForAll(do0, doIf);

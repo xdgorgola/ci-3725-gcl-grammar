@@ -7,8 +7,10 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 
+/**
+ * Clase encarga de copiar un AST
+ */
 public class ASTCopy extends com.parsing.GCLGrammarBaseVisitor<ParseTree> implements Cloneable {
-
 
 	@Override 
     public ParseTree visitWriteABody(GCLGrammarParser.WriteABodyContext ctx) { 

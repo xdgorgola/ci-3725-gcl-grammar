@@ -303,7 +303,9 @@ public class ASTTypeChecker extends com.parsing.GCLGrammarBaseVisitor<Void> {
     {
         StringBuilder pref = generatePrefix(_currRealDepth++);
         pref.append("Minus | type : int");
-        System.err.println(pref.toString());
+
+        if (_print)
+            System.out.println(pref.toString());
 
         GCLGrammarParser.ExpContext cExp = ctx.exp();
         // Chequeo de tipo y null

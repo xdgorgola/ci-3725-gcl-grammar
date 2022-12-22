@@ -1191,10 +1191,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             condExp = tmp;
         }
         
-        System.out.println("nueva guardia multiple do");
-        System.out.println(visit(condExp));
-        System.out.println();
-        
         GCLGrammarParser.IfOpContext ifInt = generarDoIfMult(doRoot.guard());
         GCLGrammarParser.InstContext thenInst = new GCLGrammarParser.InstContext(null, 0);
         thenInst.addChild(ifInt);
@@ -1245,7 +1241,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
             ABT_ABT_STR_CODE, idSet, andSeqLeft);
         
         String and = String.format("(%s %s %s)", AND_STR_CODE, andRight, forAll);
-        //System.out.println(String.format("(%s (%s x_{68} . %s) (%s x_{68} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, and, LAMBDA_STR_CODE, range));
         return String.format("(%s (%s x_{68} . %s) (%s x_{68} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, and, LAMBDA_STR_CODE, range);
     }
 
@@ -1268,7 +1263,6 @@ public class ASTConverter extends com.parsing.GCLGrammarBaseVisitor<String> {
         String leftPart = String.format("(%s (%s (%s (%s %s) (%s (%s %s))) (%s)) (%s))", IN_STR_CODE, SMALL_UNION_STR_CODE, CROSS_STR_CODE,
             CURLY_STR_CODE, ABORT_STR_CODE, COMP_POW_STR_CODE, DOM_STR_CODE, "x_{121}", "x_{121}", "x_{122}");
 
-        //System.out.println(String.format("(%s (%s x_{121} . %s) (%s x_{121} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, leftPart, LAMBDA_STR_CODE, range));
         return String.format("(%s (%s x_{121} . %s) (%s x_{121} . %s))", EXIST_STR_CODE, LAMBDA_STR_CODE, leftPart, LAMBDA_STR_CODE, range);
 
     }
